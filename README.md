@@ -44,6 +44,12 @@ Helpful if you want to list alternative sessions eg. in a tmux status bar
 sessionizer sessions --detached-only
 ```
 
+**Start default session**
+
+```
+sessionizer start
+```
+
 ## TODO
 
 - [ ] prevent user giving the default session a name containing `.` or `:`
