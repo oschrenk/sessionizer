@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"io/fs"
 	"log"
 	"os"
@@ -55,18 +56,36 @@ func entriesFromDir(dir string, ignore []string) ([]SearchEntry, error) {
 	return projects, nil
 }
 
-func entries(defaultName string, defaultPath string, searchDirs []string, ignore []string) ([]SearchEntry, error) {
+func entryFromPath(dir string) (*SearchEntry, error) {
+	if _, err := os.Stat(dir + "/.git"); os.IsNotExist(err) {
+		return nil, fmt.Errorf("build search entries. entry is not a git project %s", dir)
+	}
+	entry := &SearchEntry{filepath.Base(dir), dir}
+
+	return entry, nil
+}
+
+func entries(defaultName string, defaultPath string, searchDirs []string, entryPaths []string, ignore []string) ([]SearchEntry, error) {
 	allProjects := []SearchEntry{}
 	// TODO this should not allow a session name with `.` or `:`
 	allProjects = append(allProjects, SearchEntry{defaultName, defaultPath})
 
+	// search through directories
 	for _, searchDir := range searchDirs {
 		dirProjects, err := entriesFromDir(searchDir, ignore)
 		if err != nil {
 			return nil, err
 		}
-
 		allProjects = append(allProjects, dirProjects...)
+	}
+
+	// add specific entries
+	for _, entryPath := range entryPaths {
+		searchEntry, err := entryFromPath(entryPath)
+		if err != nil {
+			return nil, err
+		}
+		allProjects = append(allProjects, *searchEntry)
 	}
 
 	return allProjects, nil
@@ -105,10 +124,11 @@ var searchCmd = &cobra.Command{
 		defaultName := viper.GetString("default.name")
 		defaultPath := os.ExpandEnv(viper.GetString("default.path"))
 		searchDirs := mapF(viper.GetStringSlice("search.directories"), os.ExpandEnv)
+		searchEntries := mapF(viper.GetStringSlice("search.entries"), os.ExpandEnv)
 		ignore := viper.GetStringSlice("base.ignore")
 
 		// build entries
-		projects, err := entries(defaultName, defaultPath, searchDirs, ignore)
+		projects, err := entries(defaultName, defaultPath, searchDirs, searchEntries, ignore)
 		if err != nil {
 			log.Fatal(err)
 		}
