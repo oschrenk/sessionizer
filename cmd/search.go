@@ -23,12 +23,10 @@ type SearchEntry struct {
 	Path  string
 }
 
-func entries(defaultName string, defaultPath string, baseDir string, ignore []string) ([]SearchEntry, error) {
+func entriesFromDir(dir string, ignore []string) ([]SearchEntry, error) {
 	projects := []SearchEntry{}
-	// TODO this should not allow a session name with `.` or `:`
-	projects = append(projects, SearchEntry{defaultName, defaultPath})
 
-	filepath.WalkDir(baseDir, func(path string, file fs.DirEntry, err error) error {
+	filepath.WalkDir(dir, func(path string, file fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -41,7 +39,7 @@ func entries(defaultName string, defaultPath string, baseDir string, ignore []st
 				// no .git, continue search
 				return nil
 			} else {
-				label := strings.ReplaceAll(path, baseDir+"/", "")
+				label := strings.ReplaceAll(path, dir+"/", "")
 				projects = append(projects, SearchEntry{label, path})
 
 				// don't extends search breadth
@@ -55,6 +53,21 @@ func entries(defaultName string, defaultPath string, baseDir string, ignore []st
 	})
 
 	return projects, nil
+}
+
+func entries(defaultName string, defaultPath string, baseDir string, ignore []string) ([]SearchEntry, error) {
+	allProjects := []SearchEntry{}
+	// TODO this should not allow a session name with `.` or `:`
+	allProjects = append(allProjects, SearchEntry{defaultName, defaultPath})
+
+	dirProjects, err := entriesFromDir(baseDir, ignore)
+	if err != nil {
+		return nil, err
+	}
+
+	allProjects = append(allProjects, dirProjects...)
+
+	return allProjects, nil
 }
 
 func search(projects []SearchEntry) (SearchEntry, error) {
