@@ -16,8 +16,10 @@ ignore = ["node_modules"]   # optional
 name = "default"            # optional
 path = "$HOME/Downloads"    # required
 
-[projects]
-base_dir = "$HOME/Projects" # required
+[search]
+directories = [
+  "$HOME/Projects"
+]
 ```
 
 ## Usage

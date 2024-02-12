@@ -55,17 +55,19 @@ func entriesFromDir(dir string, ignore []string) ([]SearchEntry, error) {
 	return projects, nil
 }
 
-func entries(defaultName string, defaultPath string, baseDir string, ignore []string) ([]SearchEntry, error) {
+func entries(defaultName string, defaultPath string, searchDirs []string, ignore []string) ([]SearchEntry, error) {
 	allProjects := []SearchEntry{}
 	// TODO this should not allow a session name with `.` or `:`
 	allProjects = append(allProjects, SearchEntry{defaultName, defaultPath})
 
-	dirProjects, err := entriesFromDir(baseDir, ignore)
-	if err != nil {
-		return nil, err
-	}
+	for _, searchDir := range searchDirs {
+		dirProjects, err := entriesFromDir(searchDir, ignore)
+		if err != nil {
+			return nil, err
+		}
 
-	allProjects = append(allProjects, dirProjects...)
+		allProjects = append(allProjects, dirProjects...)
+	}
 
 	return allProjects, nil
 }
@@ -88,17 +90,25 @@ func startSession(project SearchEntry) {
 	server.CreateOrAttachSession(project.Label, project.Path)
 }
 
+func mapF[T, V any](ts []T, fn func(T) V) []V {
+	result := make([]V, len(ts))
+	for i, t := range ts {
+		result[i] = fn(t)
+	}
+	return result
+}
+
 var searchCmd = &cobra.Command{
 	Use:   "search",
 	Short: "Search sessions",
 	Run: func(cmd *cobra.Command, args []string) {
 		defaultName := viper.GetString("default.name")
 		defaultPath := os.ExpandEnv(viper.GetString("default.path"))
-		baseDir := os.ExpandEnv(viper.GetString("projects.base_dir"))
+		searchDirs := mapF(viper.GetStringSlice("search.directories"), os.ExpandEnv)
 		ignore := viper.GetStringSlice("base.ignore")
 
 		// build entries
-		projects, err := entries(defaultName, defaultPath, baseDir, ignore)
+		projects, err := entries(defaultName, defaultPath, searchDirs, ignore)
 		if err != nil {
 			log.Fatal(err)
 		}
