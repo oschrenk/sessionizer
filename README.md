@@ -20,6 +20,10 @@ path = "$HOME/Downloads"    # required
 directories = [
   "$HOME/Projects"
 ]
+
+entries = [
+  "$HOME/.local/share/chezmoi"
+]
 ```
 
 ## Usage
