@@ -1,16 +1,17 @@
 package cmd
 
 import (
-	fuzzyfinder "github.com/ktr0731/go-fuzzyfinder"
-	"github.com/oschrenk/sessionizer/tmux"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+
+	fuzzyfinder "github.com/ktr0731/go-fuzzyfinder"
+	"github.com/oschrenk/sessionizer/tmux"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func init() {

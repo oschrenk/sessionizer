@@ -1,9 +1,10 @@
 package tmux
 
 import (
-	"github.com/oschrenk/sessionizer/shell"
 	"os"
 	"strings"
+
+	"github.com/oschrenk/sessionizer/shell"
 )
 
 type Server struct {
