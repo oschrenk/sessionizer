@@ -83,11 +83,7 @@ func hasSession(name string) bool {
 	}
 
 	_, _, err := run(args)
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 func addSession(name string, path string) error {
