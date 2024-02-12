@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/oschrenk/sessionizer/tmux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"os"
 )
 
 func init() {
@@ -19,7 +21,11 @@ var startCmd = &cobra.Command{
 		defaultPath := os.ExpandEnv(viper.GetString("default.path"))
 
 		server := new(tmux.Server)
-		server.CreateOrAttachSession(defaultName, defaultPath)
+		err := server.CreateOrAttachSession(defaultName, defaultPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error switching to session: %s", defaultName)
+			os.Exit(1)
+		}
 	},
 }
 
