@@ -23,7 +23,7 @@ func Run(name string, args []string) (string, string, error) {
 
 	// execute command
 	err = cmd.Run()
-	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
+	outStr, errStr := stdout.String(), stderr.String()
 
 	return outStr, errStr, err
 }
