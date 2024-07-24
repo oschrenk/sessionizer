@@ -23,6 +23,10 @@ tasks:
     cmds:
       - go build -v -o "{{.BUILD_TARGET}}"
     silent: true
+  test:
+    cmds:
+      - go test ./...
+    silent: true
   install:
     cmds:
       - go install
