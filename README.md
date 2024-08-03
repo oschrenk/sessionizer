@@ -52,6 +52,25 @@ Helpful if you want to list alternative sessions eg. in a tmux status bar
 sessionizer sessions --detached-only
 ```
 
+**List all sessions as json**
+
+```
+sessionizer sessions --json
+[
+  {
+    "name": "default",
+    "path": "/Users/person/Downloads",
+    "attached": false
+  },
+  {
+    "name": "personal/project",
+    "path": "/Users/person/Projects/personal/project",
+    "attached": true
+  },
+  ...
+]
+```
+
 **Start default session**
 
 ```
