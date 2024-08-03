@@ -71,6 +71,19 @@ sessionizer sessions --json
 ]
 ```
 
+**List windows of attached session (as json)**
+
+```
+sessionizer windows --json
+[
+  {
+    "id": "@10",
+    "active": true,
+    "name": "fish"
+  }
+]
+```
+
 **Start default session**
 
 ```

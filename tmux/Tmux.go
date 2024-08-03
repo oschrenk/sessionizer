@@ -13,8 +13,14 @@ type Server struct {
 
 type Session struct {
 	Name     string `json:"name"`
-	Path     string `json:"path"`
 	Attached bool   `json:"attached"`
+	Path     string `json:"path"`
+}
+
+type Window struct {
+	Id     string `json:"id"`
+	Active bool   `json:"active"`
+	Name   string `json:"name"`
 }
 
 type TmuxContext int64
@@ -26,6 +32,7 @@ const (
 )
 
 const sessionSeparator = ":"
+const windowSeparator = ":"
 const dot = "."
 const dash = "-"
 const space = " "
@@ -57,6 +64,26 @@ func sessions(stdout string) ([]Session, error) {
 	return sessions, nil
 }
 
+// "#{window_id}:#{window_active}:#{window_name}"
+func windows(stdout string) ([]Window, error) {
+	lines := strings.Split(stdout, "\n")
+	windows := []Window{}
+
+	for _, line := range lines {
+		result := strings.Split(line, windowSeparator)
+		if len(result) != 3 {
+			continue
+		}
+		id := result[0]
+		active, _ := strconv.ParseBool(result[1])
+		name := result[2]
+
+		windows = append(windows, Window{Id: id, Active: active, Name: name})
+	}
+
+	return windows, nil
+}
+
 func run(args []string) (string, string, error) {
 	return shell.Run("tmux", args)
 }
@@ -76,6 +103,20 @@ func listSessions(detachedOnly bool) ([]Session, error) {
 	}
 
 	return sessions(out)
+}
+
+func listWindows() ([]Window, error) {
+	args := []string{
+		"list-windows",
+		"-F",
+		"#{window_id}:#{window_active}:#{window_name}"}
+
+	out, _, err := run(args)
+	if err != nil {
+		return nil, err
+	}
+
+	return windows(out)
 }
 
 func hasSession(name string) bool {
@@ -108,6 +149,11 @@ func addSession(name string, path string) error {
 // Lists all sessions managed by this server.
 func (*Server) ListSessions(detachedOnly bool) ([]Session, error) {
 	return listSessions(detachedOnly)
+}
+
+// Lists all Windows of the current sessions
+func (*Server) ListWindows() ([]Window, error) {
+	return listWindows()
 }
 
 func (*Server) HasSession(name string) bool {
