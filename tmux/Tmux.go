@@ -2,6 +2,7 @@ package tmux
 
 import (
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/oschrenk/sessionizer/shell"
@@ -11,8 +12,9 @@ type Server struct {
 }
 
 type Session struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
+	Name     string `json:"name"`
+	Path     string `json:"path"`
+	Attached bool   `json:"attached"`
 }
 
 type TmuxContext int64
@@ -35,20 +37,21 @@ func normalizeName(name string) string {
 	return strings.ToLower(name)
 }
 
-// "#{session_name}:#{session_path}"}
+// "#{session_name}:#{session_attached}:#{session_path}"}
 func sessions(stdout string) ([]Session, error) {
 	lines := strings.Split(stdout, "\n")
 	sessions := []Session{}
 
 	for _, line := range lines {
 		result := strings.Split(line, sessionSeparator)
-		if len(result) != 2 {
+		if len(result) != 3 {
 			continue
 		}
 		name := result[0]
-		path := result[1]
+		attached, _ := strconv.ParseBool(result[1])
+		path := result[2]
 
-		sessions = append(sessions, Session{Name: name, Path: path})
+		sessions = append(sessions, Session{Name: name, Attached: attached, Path: path})
 	}
 
 	return sessions, nil
@@ -62,7 +65,7 @@ func listSessions(detachedOnly bool) ([]Session, error) {
 	args := []string{
 		"list-sessions",
 		"-F",
-		"#{session_name}:#{session_path}"}
+		"#{session_name}:#{session_attached}:#{session_path}"}
 	if detachedOnly {
 		args = append(args, []string{"-f", "#{==:#{session_attached},0}"}...)
 	}
