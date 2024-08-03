@@ -18,6 +18,7 @@
 - `task release` Creates GitHub release from artifacts
 - `task sha` Prints hashes from artifacts
 - `task clean` Removes build directory `.build`
+- `task updates` Find dependency updates
 
 ## Release
 
