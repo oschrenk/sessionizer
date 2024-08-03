@@ -1,6 +1,6 @@
 module github.com/oschrenk/sessionizer
 
-go 1.21.6
+go 1.22.5
 
 require (
 	github.com/ktr0731/go-fuzzyfinder v0.8.0
