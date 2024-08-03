@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/ktr0731/go-fuzzyfinder v0.8.0
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2
 )
 
