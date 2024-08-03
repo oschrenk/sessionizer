@@ -40,6 +40,8 @@ sessionizer search
 
 ```
 sessionizer sessions
+default
+personal/project
 ```
 
 **List all detached sessions**
