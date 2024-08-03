@@ -12,8 +12,8 @@
 - `task run` Run example
 - `task test` Run tests
 - `task lint` Lint
-- `task install` Install app in `$HOME/.local/bin/`
-- `task artifacts` Produces artifact in `.build/release/`
+- `task install` Install app in `$GOBIN/`
+- `task artifacts` Produces artifact in `./`
 - `task tag` Pushes git tag from `VERSION`
 - `task release` Creates GitHub release from artifacts
 - `task sha` Prints hashes from artifacts
