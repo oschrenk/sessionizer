@@ -13,6 +13,7 @@
 - `task test` Run tests
 - `task lint` Lint
 - `task install` Install app in `$GOBIN/`
+- `task uninstall` Removed app from `$GOBIN/`
 - `task artifacts` Produces artifact in `./`
 - `task tag` Pushes git tag from `VERSION`
 - `task release` Creates GitHub release from artifacts

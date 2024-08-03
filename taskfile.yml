@@ -31,6 +31,10 @@ tasks:
     cmds:
       - go install
     silent: true
+  uninstall:
+    cmds:
+      - rm -f ${GOBIN}/{{.APP_NAME}}
+    silent: true
   artifacts:
     requires:
       vars: [APP_NAME, RELEASE_DIR]
