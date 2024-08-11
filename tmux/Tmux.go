@@ -18,9 +18,10 @@ type Session struct {
 }
 
 type Window struct {
-	Id     string `json:"id"`
-	Active bool   `json:"active"`
-	Name   string `json:"name"`
+	Id            string `json:"id"`
+	Active        bool   `json:"active"`
+	ActiveClients int    `json:"active_clients"`
+	Name          string `json:"name"`
 }
 
 type TmuxContext int64
@@ -89,7 +90,7 @@ func listWindows() ([]Window, error) {
 	args := []string{
 		"list-windows",
 		"-F",
-		"#{window_id}:#{window_active}:#{window_name}"}
+		"#{window_id}:#{window_active}:#{window_active_clients}:#{window_name}"}
 
 	out, _, err := run(args)
 	if err != nil {
@@ -99,21 +100,22 @@ func listWindows() ([]Window, error) {
 	return windows(out)
 }
 
-// "#{window_id}:#{window_active}:#{window_name}"
+// "#{window_id}:#{window_active}:#{window_active_clients}:#{window_name}"
 func windows(stdout string) ([]Window, error) {
 	lines := strings.Split(stdout, "\n")
 	windows := []Window{}
 
 	for _, line := range lines {
 		result := strings.Split(line, windowSeparator)
-		if len(result) != 3 {
+		if len(result) != 4 {
 			continue
 		}
 		id := result[0]
 		active, _ := strconv.ParseBool(result[1])
-		name := result[2]
+		activeClient, _ := strconv.Atoi(result[2])
+		name := result[3]
 
-		windows = append(windows, Window{Id: id, Active: active, Name: name})
+		windows = append(windows, Window{Id: id, Active: active, ActiveClients: activeClient, Name: name})
 	}
 
 	return windows, nil

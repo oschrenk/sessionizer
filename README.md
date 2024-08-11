@@ -79,10 +79,17 @@ sessionizer windows --json
   {
     "id": "@10",
     "active": true,
+    "active_clients": 1,
     "name": "fish"
   }
 ]
 ```
+With
+
+- `active` meaning that the window is currently selected by a session as it's window
+- `active_clients` counting the number of clients actively viewing that window.
+
+The distinction here is that a session might be detached. A window would still be `active` but would have one less `active_lients`
 
 **Start default session**
 
