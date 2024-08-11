@@ -64,26 +64,6 @@ func sessions(stdout string) ([]Session, error) {
 	return sessions, nil
 }
 
-// "#{window_id}:#{window_active}:#{window_name}"
-func windows(stdout string) ([]Window, error) {
-	lines := strings.Split(stdout, "\n")
-	windows := []Window{}
-
-	for _, line := range lines {
-		result := strings.Split(line, windowSeparator)
-		if len(result) != 3 {
-			continue
-		}
-		id := result[0]
-		active, _ := strconv.ParseBool(result[1])
-		name := result[2]
-
-		windows = append(windows, Window{Id: id, Active: active, Name: name})
-	}
-
-	return windows, nil
-}
-
 func run(args []string) (string, string, error) {
 	return shell.Run("tmux", args)
 }
@@ -117,6 +97,26 @@ func listWindows() ([]Window, error) {
 	}
 
 	return windows(out)
+}
+
+// "#{window_id}:#{window_active}:#{window_name}"
+func windows(stdout string) ([]Window, error) {
+	lines := strings.Split(stdout, "\n")
+	windows := []Window{}
+
+	for _, line := range lines {
+		result := strings.Split(line, windowSeparator)
+		if len(result) != 3 {
+			continue
+		}
+		id := result[0]
+		active, _ := strconv.ParseBool(result[1])
+		name := result[2]
+
+		windows = append(windows, Window{Id: id, Active: active, Name: name})
+	}
+
+	return windows, nil
 }
 
 func hasSession(name string) bool {
