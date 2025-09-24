@@ -21,16 +21,9 @@ var layoutCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		filePath := args[0]
 
-		data, err := os.ReadFile(filePath)
+		layout, err := tmuxp.ReadLayoutFromFile(filePath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error reading file: %v\n", err)
-			os.Exit(1)
-		}
-
-		var layout tmuxp.Layout
-		err = yaml.Unmarshal(data, &layout)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing YAML: %v\n", err)
+			fmt.Fprintf(os.Stderr, "Error reading layout file: %v\n", err)
 			os.Exit(1)
 		}
 
