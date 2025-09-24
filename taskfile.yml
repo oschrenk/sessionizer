@@ -29,6 +29,7 @@ tasks:
     silent: true
   install:
     cmds:
+      - go mod tidy
       - go install
     silent: true
   uninstall:
