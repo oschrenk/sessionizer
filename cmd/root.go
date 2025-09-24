@@ -9,9 +9,10 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "sessionizer",
-	Short: "Fuzzy finder for tmux sessions",
-	Run:   func(cmd *cobra.Command, args []string) {},
+	Use:     "sessionizer",
+	Short:   "Fuzzy finder for tmux sessions",
+	Version: Version,
+	Run:     func(cmd *cobra.Command, args []string) {},
 }
 
 func Execute() {
