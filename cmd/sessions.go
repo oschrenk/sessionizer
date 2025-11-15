@@ -22,6 +22,8 @@ var sessionsCmd = &cobra.Command{
 		server := new(tmux.Server)
 		sessions, err := server.ListSessions(detachedOnly)
 		if err != nil {
+			// empty array
+			fmt.Println("[]")
 			return
 		}
 		if AsJson {
