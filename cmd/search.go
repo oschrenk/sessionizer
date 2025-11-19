@@ -65,14 +65,14 @@ func entryFromPath(dir string) (*SearchEntry, error) {
 	return entry, nil
 }
 
-func entries(defaultName string, defaultPath string, searchDirs []string, entryPaths []string, ignore []string) ([]SearchEntry, error) {
+func entries(config Config) ([]SearchEntry, error) {
 	allProjects := []SearchEntry{}
 	// TODO this should not allow a session name with `.` or `:`
-	allProjects = append(allProjects, SearchEntry{defaultName, defaultPath})
+	allProjects = append(allProjects, SearchEntry{config.DefaultName, config.DefaultPath})
 
 	// search through directories
-	for _, searchDir := range searchDirs {
-		dirProjects, err := entriesFromDir(searchDir, ignore)
+	for _, searchDir := range config.SearchDirs {
+		dirProjects, err := entriesFromDir(searchDir, config.Ignore)
 		if err != nil {
 			return nil, err
 		}
@@ -80,7 +80,7 @@ func entries(defaultName string, defaultPath string, searchDirs []string, entryP
 	}
 
 	// add specific entries
-	for _, entryPath := range entryPaths {
+	for _, entryPath := range config.SearchEntries {
 		searchEntry, err := entryFromPath(entryPath)
 		if err != nil {
 			return nil, err
@@ -131,7 +131,7 @@ var searchCmd = &cobra.Command{
 		}
 
 		// build entries
-		projects, err := entries(config.DefaultName, config.DefaultPath, config.SearchDirs, config.SearchEntries, config.Ignore)
+		projects, err := entries(config)
 		if err != nil {
 			log.Fatal(err)
 		}
