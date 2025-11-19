@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"io/fs"
 	"log"
 	"os"
@@ -66,11 +65,7 @@ func entriesFromDir(dir string, ignore []string, rooterPatterns []string) ([]Sea
 }
 
 func entryFromPath(dir string) (*SearchEntry, error) {
-	if _, err := os.Stat(dir + "/.git"); os.IsNotExist(err) {
-		return nil, fmt.Errorf("build search entries. entry is not a git project %s", dir)
-	}
 	entry := &SearchEntry{filepath.Base(dir), dir}
-
 	return entry, nil
 }
 
