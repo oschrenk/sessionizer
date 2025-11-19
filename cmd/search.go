@@ -24,7 +24,7 @@ type SearchEntry struct {
 	Path  string
 }
 
-func entriesFromDir(dir string, ignore []string) ([]SearchEntry, error) {
+func entriesFromDir(dir string, ignore []string, rooterPatterns []string) ([]SearchEntry, error) {
 	projects := []SearchEntry{}
 
 	filepath.WalkDir(dir, func(path string, file fs.DirEntry, err error) error {
@@ -32,12 +32,21 @@ func entriesFromDir(dir string, ignore []string) ([]SearchEntry, error) {
 			return err
 		}
 		if file.IsDir() {
-			if _, err := os.Stat(path + "/.git"); os.IsNotExist(err) {
+			// check if any rooter pattern exists in this directory
+			hasRooterPattern := false
+			for _, pattern := range rooterPatterns {
+				if _, err := os.Stat(filepath.Join(path, pattern)); err == nil {
+					hasRooterPattern = true
+					break
+				}
+			}
+
+			if !hasRooterPattern {
 				// ignore directories
 				if slices.Contains(ignore, file.Name()) {
 					return filepath.SkipDir
 				}
-				// no .git, continue search
+				// no rooter pattern found, continue search
 				return nil
 			} else {
 				label := strings.ReplaceAll(path, dir+"/", "")
@@ -72,7 +81,7 @@ func entries(config Config) ([]SearchEntry, error) {
 
 	// search through directories
 	for _, searchDir := range config.SearchDirs {
-		dirProjects, err := entriesFromDir(searchDir, config.Ignore)
+		dirProjects, err := entriesFromDir(searchDir, config.Ignore, config.RooterPatterns)
 		if err != nil {
 			return nil, err
 		}
