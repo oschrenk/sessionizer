@@ -121,14 +121,17 @@ var searchCmd = &cobra.Command{
 	Use:   "search",
 	Short: "Search sessions",
 	Run: func(cmd *cobra.Command, args []string) {
-		defaultName := viper.GetString("default.name")
-		defaultPath := os.ExpandEnv(viper.GetString("default.path"))
-		searchDirs := mapF(viper.GetStringSlice("search.directories"), os.ExpandEnv)
-		searchEntries := mapF(viper.GetStringSlice("search.entries"), os.ExpandEnv)
-		ignore := viper.GetStringSlice("base.ignore")
+		config := Config{
+			DefaultName:    viper.GetString("default.name"),
+			DefaultPath:    os.ExpandEnv(viper.GetString("default.path")),
+			SearchDirs:     mapF(viper.GetStringSlice("search.directories"), os.ExpandEnv),
+			SearchEntries:  mapF(viper.GetStringSlice("search.entries"), os.ExpandEnv),
+			Ignore:         viper.GetStringSlice("base.ignore"),
+			RooterPatterns: viper.GetStringSlice("base.rooter_patterns"),
+		}
 
 		// build entries
-		projects, err := entries(defaultName, defaultPath, searchDirs, searchEntries, ignore)
+		projects, err := entries(config.DefaultName, config.DefaultPath, config.SearchDirs, config.SearchEntries, config.Ignore)
 		if err != nil {
 			log.Fatal(err)
 		}
