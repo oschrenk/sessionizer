@@ -13,6 +13,9 @@ var rootCmd = &cobra.Command{
 	Short:   "Fuzzy finder for tmux sessions",
 	Version: Version,
 	Run:     func(cmd *cobra.Command, args []string) {},
+	CompletionOptions: cobra.CompletionOptions{
+		HiddenDefaultCmd: true,
+	},
 }
 
 func Execute() {
