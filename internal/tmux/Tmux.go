@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oschrenk/sessionizer/shell"
+	"github.com/oschrenk/sessionizer/internal/shell"
 )
 
 type Server struct {

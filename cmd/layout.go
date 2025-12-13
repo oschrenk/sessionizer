@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/oschrenk/sessionizer/tmuxp"
+	"github.com/oschrenk/sessionizer/internal/tmuxp"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )

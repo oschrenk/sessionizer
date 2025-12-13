@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/oschrenk/sessionizer/tmux"
+	"github.com/oschrenk/sessionizer/internal/tmux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

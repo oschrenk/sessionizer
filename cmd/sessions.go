@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/oschrenk/sessionizer/tmux"
+	"github.com/oschrenk/sessionizer/internal/tmux"
 	"github.com/spf13/cobra"
 )
 
