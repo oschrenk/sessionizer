@@ -158,6 +158,26 @@ func (*Server) ListWindows() ([]Window, error) {
 	return listWindows()
 }
 
+// Creates a new window with the given name and starting directory
+// Returns the unique window ID assigned by tmux
+func (*Server) AddWindow(name string, path string) (string, error) {
+	args := []string{
+		"new-window",
+		"-n",
+		name,
+		"-c",
+		path,
+		"-P",
+		"-F",
+		"#{window_id}",
+	}
+	out, _, err := run(args)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(out), nil
+}
+
 func (*Server) HasSession(name string) bool {
 	return hasSession(name)
 }
