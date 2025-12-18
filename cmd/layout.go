@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/oschrenk/sessionizer/core"
+	"github.com/oschrenk/sessionizer/internal/tmux"
 	"github.com/oschrenk/sessionizer/internal/tmuxp"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -31,7 +32,8 @@ var layoutCmd = &cobra.Command{
 		}
 
 		if apply {
-			err := core.ApplyLayout(layout)
+			server := &tmux.Server{}
+			err := core.ApplyLayout(server, layout)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error applying layout: %v\n", err)
 				os.Exit(1)
