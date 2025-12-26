@@ -8,15 +8,18 @@ import (
 	"github.com/oschrenk/sessionizer/internal/shell"
 )
 
+// Server represents a tmux server instance and provides methods to interact with it.
 type Server struct {
 }
 
+// Session represents a tmux session with its name, attachment status, and working directory.
 type Session struct {
 	Name     string `json:"name"`
 	Attached bool   `json:"attached"`
 	Path     string `json:"path"`
 }
 
+// Window represents a tmux window within a session.
 type Window struct {
 	Id            string `json:"id"`
 	Active        bool   `json:"active"`
@@ -24,11 +27,15 @@ type Window struct {
 	Name          string `json:"name"`
 }
 
+// TmuxContext represents the current execution context relative to tmux.
 type TmuxContext int64
 
 const (
+	// Attached indicates the process is running inside a tmux session.
 	Attached TmuxContext = iota
+	// Detached indicates a tmux server is running but the process is outside any session.
 	Detached
+	// Serverless indicates no tmux server is currently running.
 	Serverless
 )
 
@@ -38,6 +45,9 @@ const dot = "."
 const dash = "-"
 const space = " "
 
+// normalizeName converts a session name to a tmux-safe format by replacing
+// problematic characters (colons, spaces, dots) with dashes and converting to lowercase.
+// This prevents issues with tmux's session name parsing which uses colon as a separator.
 func normalizeName(name string) string {
 	name = strings.ReplaceAll(name, sessionSeparator, dash)
 	name = strings.ReplaceAll(name, space, dash)
@@ -178,6 +188,8 @@ func (*Server) AddWindow(name string, path string) (string, error) {
 	return strings.TrimSpace(out), nil
 }
 
+// HasSession checks if a tmux session with the given name exists.
+// Returns true if the session exists, false otherwise.
 func (*Server) HasSession(name string) bool {
 	return hasSession(name)
 }
@@ -252,7 +264,13 @@ func switchClient(name string) error {
 	return nil
 }
 
-// Attach session
+// CreateOrAttachSession creates a new session or attaches to an existing one with the given name.
+// The session name is normalized (lowercased, special chars replaced with dashes) before use.
+// If the session doesn't exist, it will be created with the specified path as the starting directory.
+// The behavior depends on the current tmux context:
+//   - Attached: switches to the session using switch-session
+//   - Detached: attaches to the session using attach-session
+//   - Serverless: switches the client to the session using switch-client
 func (*Server) CreateOrAttachSession(name string, path string) error {
 	name = normalizeName(name)
 	if !hasSession(name) {
