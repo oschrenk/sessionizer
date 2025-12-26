@@ -96,20 +96,6 @@ func listSessions(detachedOnly bool) ([]Session, error) {
 	return sessions(out)
 }
 
-func listWindows() ([]Window, error) {
-	args := []string{
-		"list-windows",
-		"-F",
-		"#{window_id}:#{window_active}:#{window_active_clients}:#{window_name}"}
-
-	out, _, err := run(args)
-	if err != nil {
-		return nil, err
-	}
-
-	return windows(out)
-}
-
 // "#{window_id}:#{window_active}:#{window_active_clients}:#{window_name}"
 func windows(stdout string) ([]Window, error) {
 	lines := strings.Split(stdout, "\n")
@@ -131,33 +117,6 @@ func windows(stdout string) ([]Window, error) {
 	return windows, nil
 }
 
-func hasSession(name string) bool {
-	args := []string{
-		"has-session",
-		"-t",
-		name,
-	}
-
-	_, _, err := run(args)
-	return err == nil
-}
-
-func addSession(name string, path string) error {
-	args := []string{
-		"new-session",
-		"-d",
-		"-s",
-		name,
-		"-c",
-		path,
-	}
-	_, _, err := run(args)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // Lists all sessions managed by this server.
 func (*Server) ListSessions(detachedOnly bool) ([]Session, error) {
 	return listSessions(detachedOnly)
@@ -165,7 +124,17 @@ func (*Server) ListSessions(detachedOnly bool) ([]Session, error) {
 
 // Lists all Windows of the current sessions
 func (*Server) ListWindows() ([]Window, error) {
-	return listWindows()
+	args := []string{
+		"list-windows",
+		"-F",
+		"#{window_id}:#{window_active}:#{window_active_clients}:#{window_name}"}
+
+	out, _, err := run(args)
+	if err != nil {
+		return nil, err
+	}
+
+	return windows(out)
 }
 
 // Creates a new window with the given name and starting directory
@@ -191,7 +160,14 @@ func (*Server) AddWindow(name string, path string) (string, error) {
 // HasSession checks if a tmux session with the given name exists.
 // Returns true if the session exists, false otherwise.
 func (*Server) HasSession(name string) bool {
-	return hasSession(name)
+	args := []string{
+		"has-session",
+		"-t",
+		name,
+	}
+
+	_, _, err := run(args)
+	return err == nil
 }
 
 // Add session
@@ -202,7 +178,19 @@ func (*Server) HasSession(name string) bool {
 //
 // but are problematic, but since we normalize before, we should be fine
 func (*Server) AddSession(name string, path string) error {
-	return addSession(name, path)
+	args := []string{
+		"new-session",
+		"-d",
+		"-s",
+		name,
+		"-c",
+		path,
+	}
+	_, _, err := run(args)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func getContext() TmuxContext {
