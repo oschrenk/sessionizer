@@ -271,10 +271,10 @@ func switchClient(name string) error {
 //   - Attached: switches to the session using switch-session
 //   - Detached: attaches to the session using attach-session
 //   - Serverless: switches the client to the session using switch-client
-func (*Server) CreateOrAttachSession(name string, path string) error {
+func (s *Server) CreateOrAttachSession(name string, path string) error {
 	name = normalizeName(name)
-	if !hasSession(name) {
-		err := addSession(name, path)
+	if !s.HasSession(name) {
+		err := s.AddSession(name, path)
 		if err != nil {
 			return err
 		}
