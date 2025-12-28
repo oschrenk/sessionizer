@@ -27,7 +27,7 @@ func normalizeName(name string) string {
 }
 
 // "#{session_name}:#{session_attached}:#{session_path}"}
-func sessions(stdout string) ([]Session, error) {
+func parseSessions(stdout string) ([]Session, error) {
 	lines := strings.Split(stdout, "\n")
 	sessions := []Session{}
 
@@ -64,7 +64,7 @@ func listSessions(detachedOnly bool) ([]Session, error) {
 		return nil, err
 	}
 
-	return sessions(out)
+	return parseSessions(out)
 }
 
 // "#{window_id}:#{window_active}:#{window_active_clients}:#{window_name}"
