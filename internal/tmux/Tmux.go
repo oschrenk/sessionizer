@@ -26,9 +26,28 @@ func normalizeName(name string) string {
 	return strings.ToLower(name)
 }
 
-// "#{session_name}:#{session_attached}:#{session_path}"}
-func parseSessions(stdout string) ([]Session, error) {
-	lines := strings.Split(stdout, "\n")
+func run(args []string) (string, string, error) {
+	return shell.Run("tmux", args)
+}
+
+func listSessions(detachedOnly bool) ([]Session, error) {
+	const sessionFormat = "#{session_name}:#{session_attached}:#{session_path}"
+
+	args := []string{
+		"list-sessions",
+		"-F",
+		sessionFormat}
+
+	if detachedOnly {
+		args = append(args, []string{"-f", "#{==:#{session_attached},0}"}...)
+	}
+
+	out, _, err := run(args)
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(out, "\n")
 	sessions := []Session{}
 
 	for _, line := range lines {
@@ -44,27 +63,6 @@ func parseSessions(stdout string) ([]Session, error) {
 	}
 
 	return sessions, nil
-}
-
-func run(args []string) (string, string, error) {
-	return shell.Run("tmux", args)
-}
-
-func listSessions(detachedOnly bool) ([]Session, error) {
-	args := []string{
-		"list-sessions",
-		"-F",
-		"#{session_name}:#{session_attached}:#{session_path}"}
-	if detachedOnly {
-		args = append(args, []string{"-f", "#{==:#{session_attached},0}"}...)
-	}
-
-	out, _, err := run(args)
-	if err != nil {
-		return nil, err
-	}
-
-	return parseSessions(out)
 }
 
 // "#{window_id}:#{window_active}:#{window_active_clients}:#{window_name}"
