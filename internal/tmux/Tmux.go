@@ -60,7 +60,9 @@ func listSessions(detachedOnly bool) ([]Session, error) {
 		attached, _ := strconv.ParseBool(result[2])
 		path := result[3]
 
-		sessions = append(sessions, Session{Id: id, Name: name, Attached: attached, Path: path})
+		session := Session{Id: id, Name: name, Attached: attached, Path: path}
+
+		sessions = append(sessions, session)
 	}
 
 	return sessions, nil
@@ -81,7 +83,9 @@ func windows(stdout string) ([]Window, error) {
 		activeClient, _ := strconv.Atoi(result[2])
 		name := result[3]
 
-		windows = append(windows, Window{Id: id, Active: active, ActiveClients: activeClient, Name: name})
+		window := Window{Id: id, Active: active, ActiveClients: activeClient, Name: name}
+
+		windows = append(windows, window)
 	}
 
 	return windows, nil
