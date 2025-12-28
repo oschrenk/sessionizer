@@ -30,6 +30,20 @@ func run(args []string) (string, string, error) {
 	return shell.Run("tmux", args)
 }
 
+func parseSession(line string) (Session, bool) {
+	result := strings.Split(line, sessionSeparator)
+	if len(result) != 4 {
+		return Session{}, false
+	}
+	id := result[0]
+	name := result[1]
+	attached, _ := strconv.ParseBool(result[2])
+	path := result[3]
+
+	session := Session{Id: id, Name: name, Attached: attached, Path: path}
+	return session, true
+}
+
 func listSessions(detachedOnly bool) ([]Session, error) {
 	const sessionFormat = "#{session_id}:#{session_name}:#{session_attached}:#{session_path}"
 
@@ -51,17 +65,10 @@ func listSessions(detachedOnly bool) ([]Session, error) {
 	sessions := []Session{}
 
 	for _, line := range lines {
-		result := strings.Split(line, sessionSeparator)
-		if len(result) != 4 {
+		session, ok := parseSession(line)
+		if !ok {
 			continue
 		}
-		id := result[0]
-		name := result[1]
-		attached, _ := strconv.ParseBool(result[2])
-		path := result[3]
-
-		session := Session{Id: id, Name: name, Attached: attached, Path: path}
-
 		sessions = append(sessions, session)
 	}
 
