@@ -14,8 +14,10 @@ const dot = "."
 const dash = "-"
 const space = " "
 
-// normalizeName converts a session name to a tmux-safe format by replacing
-// problematic characters (colons, spaces, dots) with dashes and converting to lowercase.
+// normalizeName converts a session name to a tmux-safe
+// format y replacing problematic characters
+// - (colons, spaces, dots) with dashes and converting to lowercase.
+//
 // This prevents issues with tmux's session name parsing which uses colon as a separator.
 func normalizeName(name string) string {
 	name = strings.ReplaceAll(name, sessionSeparator, dash)
@@ -222,8 +224,11 @@ func switchClient(name string) error {
 }
 
 // CreateOrAttachSession creates a new session or attaches to an existing one with the given name.
+//
 // The session name is normalized (lowercased, special chars replaced with dashes) before use.
+//
 // If the session doesn't exist, it will be created with the specified path as the starting directory.
+//
 // The behavior depends on the current tmux context:
 //   - Attached: switches to the session using switch-session
 //   - Detached: attaches to the session using attach-session
