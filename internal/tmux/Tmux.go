@@ -1,6 +1,7 @@
 package tmux
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -44,7 +45,21 @@ func parseSession(line string) (Session, bool) {
 	return session, true
 }
 
-func listSessions(detachedOnly bool) ([]Session, error) {
+func (*Server) currentSessionId() (string, error) {
+	args := []string{
+		"display-message",
+		"-p",
+		"#{session_id}"}
+
+	out, _, err := run(args)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(out), nil
+}
+
+func listSessions(detachedOnly bool, sessionId string) ([]Session, error) {
 	const sessionFormat = "#{session_id}:#{session_name}:#{session_attached}:#{session_path}"
 
 	args := []string{
@@ -54,6 +69,10 @@ func listSessions(detachedOnly bool) ([]Session, error) {
 
 	if detachedOnly {
 		args = append(args, []string{"-f", "#{==:#{session_attached},0}"}...)
+	}
+
+	if sessionId != "" {
+		args = append(args, []string{"-f", fmt.Sprintf("#{==:#{session_id},%s}", sessionId)}...)
 	}
 
 	out, _, err := run(args)
@@ -98,9 +117,27 @@ func windows(stdout string) ([]Window, error) {
 	return windows, nil
 }
 
+func (s *Server) CurrentSession() (Session, error) {
+	currentSessionId, err := s.currentSessionId()
+	if err != nil {
+		return Session{}, err
+	}
+
+	sessions, err := listSessions(false, currentSessionId)
+	if err != nil {
+		return Session{}, err
+	}
+
+	if len(sessions) == 0 {
+		return Session{}, fmt.Errorf("no session found with id: %s", currentSessionId)
+	}
+
+	return sessions[0], nil
+}
+
 // Lists all sessions managed by this server.
 func (*Server) ListSessions(detachedOnly bool) ([]Session, error) {
-	return listSessions(detachedOnly)
+	return listSessions(detachedOnly, "")
 }
 
 // Lists all Windows of the current sessions
@@ -175,7 +212,7 @@ func (*Server) AddSession(name string, path string) error {
 }
 
 func getContext() TmuxContext {
-	_, err := listSessions(false)
+	_, err := listSessions(false, "")
 	if err != nil {
 		return Serverless
 	}
