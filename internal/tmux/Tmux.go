@@ -31,7 +31,7 @@ func run(args []string) (string, string, error) {
 }
 
 func listSessions(detachedOnly bool) ([]Session, error) {
-	const sessionFormat = "#{session_name}:#{session_attached}:#{session_path}"
+	const sessionFormat = "#{session_id}:#{session_name}:#{session_attached}:#{session_path}"
 
 	args := []string{
 		"list-sessions",
@@ -52,14 +52,15 @@ func listSessions(detachedOnly bool) ([]Session, error) {
 
 	for _, line := range lines {
 		result := strings.Split(line, sessionSeparator)
-		if len(result) != 3 {
+		if len(result) != 4 {
 			continue
 		}
-		name := result[0]
-		attached, _ := strconv.ParseBool(result[1])
-		path := result[2]
+		id := result[0]
+		name := result[1]
+		attached, _ := strconv.ParseBool(result[2])
+		path := result[3]
 
-		sessions = append(sessions, Session{Name: name, Attached: attached, Path: path})
+		sessions = append(sessions, Session{Id: id, Name: name, Attached: attached, Path: path})
 	}
 
 	return sessions, nil

@@ -6,6 +6,7 @@ type Server struct {
 
 // Session represents a tmux session with its name, attachment status, and working directory.
 type Session struct {
+	Id       string `json:"id"`
 	Name     string `json:"name"`
 	Attached bool   `json:"attached"`
 	Path     string `json:"path"`
