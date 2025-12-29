@@ -19,7 +19,12 @@ var windowsCmd = &cobra.Command{
 		AsJson, _ := cmd.Flags().GetBool("json")
 
 		server := new(tmux.Server)
-		windows, err := server.ListWindows()
+		currentSession, err := server.CurrentSession()
+		if err != nil {
+			return
+		}
+
+		windows, err := server.ListWindows(currentSession.Id)
 		if err != nil {
 			return
 		}
