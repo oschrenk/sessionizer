@@ -140,7 +140,7 @@ func (*Server) ListSessions(detachedOnly bool) ([]Session, error) {
 	return listSessions(detachedOnly, "")
 }
 
-// Lists all Windows of the current sessions
+// Lists all Windows of the current session
 func (*Server) ListWindows() ([]Window, error) {
 	args := []string{
 		"list-windows",
