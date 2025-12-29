@@ -260,11 +260,11 @@ func getContext() TmuxContext {
 	}
 }
 
-func switchSession(name string) error {
+func switchSession(sessionName string) error {
 	args := []string{
 		"switch",
 		"-t",
-		name,
+		sessionName,
 	}
 
 	_, _, err := run(args)
@@ -275,11 +275,11 @@ func switchSession(name string) error {
 	return nil
 }
 
-func attachSession(name string) error {
+func attachSession(sessionName string) error {
 	args := []string{
 		"attach",
 		"-t",
-		name,
+		sessionName,
 	}
 
 	_, _, err := run(args)
@@ -290,11 +290,11 @@ func attachSession(name string) error {
 	return nil
 }
 
-func switchClient(name string) error {
+func switchClient(sessionName string) error {
 	args := []string{
 		"switch-client",
 		"-t",
-		name,
+		sessionName,
 	}
 
 	_, _, err := run(args)
