@@ -317,7 +317,8 @@ func switchClient(name string) error {
 //   - Serverless: switches the client to the session using switch-client
 func (s *Server) CreateOrAttachSession(name string, path string) error {
 	name = normalizeName(name)
-	if !s.HasSession(name) {
+	_, err := s.GetSessionByName(name)
+	if err != nil {
 		_, err := s.AddSession(name, path)
 		if err != nil {
 			return err
