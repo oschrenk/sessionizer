@@ -95,7 +95,7 @@ func listSessions(detachedOnly bool, sessionId string) ([]Session, error) {
 }
 
 // "#{window_id}:#{window_active}:#{window_active_clients}:#{window_name}"
-func windows(stdout string) ([]Window, error) {
+func parseWindows(stdout string) ([]Window, error) {
 	lines := strings.Split(stdout, "\n")
 	windows := []Window{}
 
@@ -152,7 +152,7 @@ func (*Server) ListWindows() ([]Window, error) {
 		return nil, err
 	}
 
-	return windows(out)
+	return parseWindows(out)
 }
 
 // Creates a new window with the given name and starting directory
