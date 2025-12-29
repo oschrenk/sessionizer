@@ -21,7 +21,7 @@ var startCmd = &cobra.Command{
 		defaultPath := os.ExpandEnv(viper.GetString("default.path"))
 
 		server := new(tmux.Server)
-		err := server.CreateOrAttachSession(defaultName, defaultPath)
+		_, err := server.CreateOrAttachSession(defaultName, defaultPath)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error switching to session: %s", defaultName)
 			os.Exit(1)

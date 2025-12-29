@@ -315,25 +315,29 @@ func switchClient(name string) error {
 //   - Attached: switches to the session using switch-session
 //   - Detached: attaches to the session using attach-session
 //   - Serverless: switches the client to the session using switch-client
-func (s *Server) CreateOrAttachSession(name string, path string) error {
+func (s *Server) CreateOrAttachSession(name string, path string) (Session, error) {
 	name = normalizeName(name)
-	_, err := s.GetSessionByName(name)
+	session, err := s.GetSessionByName(name)
 	if err != nil {
-		_, err := s.AddSession(name, path)
+		session, err = s.AddSession(name, path)
 		if err != nil {
-			return err
+			return Session{}, err
 		}
 	}
 
+	var attachErr error
 	switch getContext() {
 	case Attached:
-		return switchSession(name)
+		attachErr = switchSession(name)
 	case Detached:
-		return attachSession(name)
+		attachErr = attachSession(name)
 	case Serverless:
-		return switchClient(name)
+		attachErr = switchClient(name)
 	}
 
-	// should never be reached
-	return nil
+	if attachErr != nil {
+		return Session{}, attachErr
+	}
+
+	return session, nil
 }

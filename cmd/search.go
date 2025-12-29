@@ -31,7 +31,10 @@ func search(projects []model.Entry) (model.Entry, error) {
 
 func startSession(project model.Entry) {
 	server := new(tmux.Server)
-	server.CreateOrAttachSession(project.Label, project.Path)
+	_, err := server.CreateOrAttachSession(project.Label, project.Path)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func mapF[T, V any](ts []T, fn func(T) V) []V {
