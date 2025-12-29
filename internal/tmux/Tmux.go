@@ -192,7 +192,9 @@ func (*Server) HasSession(name string) bool {
 // - the char `.`
 //
 // but are problematic, but since we normalize before, we should be fine
-func (*Server) AddSession(name string, path string) error {
+func (*Server) AddSession(name string, path string) (Session, error) {
+	const sessionFormat = "#{session_id}:#{session_name}:#{session_attached}:#{session_path}"
+
 	args := []string{
 		"new-session",
 		"-d",
@@ -200,12 +202,21 @@ func (*Server) AddSession(name string, path string) error {
 		name,
 		"-c",
 		path,
+		"-P",
+		"-F",
+		sessionFormat,
 	}
-	_, _, err := run(args)
+	out, _, err := run(args)
 	if err != nil {
-		return err
+		return Session{}, err
 	}
-	return nil
+
+	session, ok := parseSession(strings.TrimSpace(out))
+	if !ok {
+		return Session{}, fmt.Errorf("failed to parse session output: %s", out)
+	}
+
+	return session, nil
 }
 
 func getContext() TmuxContext {
@@ -280,7 +291,7 @@ func switchClient(name string) error {
 func (s *Server) CreateOrAttachSession(name string, path string) error {
 	name = normalizeName(name)
 	if !s.HasSession(name) {
-		err := s.AddSession(name, path)
+		_, err := s.AddSession(name, path)
 		if err != nil {
 			return err
 		}
