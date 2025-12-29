@@ -185,6 +185,33 @@ func (*Server) HasSession(name string) bool {
 	return err == nil
 }
 
+// Retrieve a Session by name.
+//
+// Returns error if session doesn't exist.
+func (*Server) GetSessionByName(name string) (Session, error) {
+	const sessionFormat = "#{session_id}:#{session_name}:#{session_attached}:#{session_path}"
+
+	args := []string{
+		"display-message",
+		"-t",
+		name,
+		"-p",
+		sessionFormat,
+	}
+
+	out, _, err := run(args)
+	if err != nil {
+		return Session{}, err
+	}
+
+	session, ok := parseSession(strings.TrimSpace(out))
+	if !ok {
+		return Session{}, fmt.Errorf("failed to parse session output: %s", out)
+	}
+
+	return session, nil
+}
+
 // Add session
 //
 // we should guard against session names containing
