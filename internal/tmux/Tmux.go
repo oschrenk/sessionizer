@@ -94,29 +94,6 @@ func listSessions(detachedOnly bool, sessionId string) ([]Session, error) {
 	return sessions, nil
 }
 
-// "#{window_id}:#{window_active}:#{window_active_clients}:#{window_name}"
-func parseWindows(stdout string) ([]Window, error) {
-	lines := strings.Split(stdout, "\n")
-	windows := []Window{}
-
-	for _, line := range lines {
-		result := strings.Split(line, windowSeparator)
-		if len(result) != 4 {
-			continue
-		}
-		id := result[0]
-		active, _ := strconv.ParseBool(result[1])
-		activeClient, _ := strconv.Atoi(result[2])
-		name := result[3]
-
-		window := Window{Id: id, Active: active, ActiveClients: activeClient, Name: name}
-
-		windows = append(windows, window)
-	}
-
-	return windows, nil
-}
-
 func (s *Server) CurrentSession() (Session, error) {
 	currentSessionId, err := s.currentSessionId()
 	if err != nil {
@@ -154,7 +131,25 @@ func (*Server) ListWindows(sessionId string) ([]Window, error) {
 		return nil, err
 	}
 
-	return parseWindows(out)
+	lines := strings.Split(out, "\n")
+	windows := []Window{}
+
+	for _, line := range lines {
+		result := strings.Split(line, windowSeparator)
+		if len(result) != 4 {
+			continue
+		}
+		id := result[0]
+		active, _ := strconv.ParseBool(result[1])
+		activeClient, _ := strconv.Atoi(result[2])
+		name := result[3]
+
+		window := Window{Id: id, Active: active, ActiveClients: activeClient, Name: name}
+
+		windows = append(windows, window)
+	}
+
+	return windows, nil
 }
 
 // Creates a new window with the given name and starting directory
