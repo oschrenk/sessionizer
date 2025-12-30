@@ -172,6 +172,19 @@ func (*Server) AddWindow(name string, path string) (string, error) {
 	return strings.TrimSpace(out), nil
 }
 
+// SelectWindow selects (switches to) the specified window.
+// The target can be a window ID, window index, or window name.
+func (*Server) SelectWindow(targetWindow string) error {
+	args := []string{
+		"select-window",
+		"-t",
+		targetWindow,
+	}
+
+	_, _, err := run(args)
+	return err
+}
+
 // HasSession checks if a tmux session with the given name exists.
 // Returns true if the session exists, false otherwise.
 func (*Server) HasSession(name string) bool {
