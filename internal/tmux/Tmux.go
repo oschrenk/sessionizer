@@ -152,6 +152,40 @@ func (*Server) ListWindows(sessionId string) ([]Window, error) {
 	return windows, nil
 }
 
+// Lists all panes in the targeted window
+func (*Server) ListPanes(targetWindow string) ([]Pane, error) {
+	args := []string{
+		"list-panes",
+		"-t",
+		targetWindow,
+		"-F",
+		"#{pane_id}:#{pane_index}:#{pane_active}"}
+
+	out, _, err := run(args)
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(out, "\n")
+	panes := []Pane{}
+
+	for _, line := range lines {
+		result := strings.Split(line, ":")
+		if len(result) != 3 {
+			continue
+		}
+		id := result[0]
+		index, _ := strconv.Atoi(result[1])
+		active, _ := strconv.ParseBool(result[2])
+
+		pane := Pane{Id: id, Index: index, Active: active}
+
+		panes = append(panes, pane)
+	}
+
+	return panes, nil
+}
+
 // Creates a new window with the given name and starting directory
 // Returns the unique window ID assigned by tmux
 func (*Server) AddWindow(name string, path string) (string, error) {
