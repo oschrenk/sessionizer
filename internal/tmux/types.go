@@ -20,6 +20,13 @@ type Window struct {
 	Name          string `json:"name"`
 }
 
+// Pane represents a tmux pane within a window.
+type Pane struct {
+	Id     string `json:"id"`
+	Index  int    `json:"index"`
+	Active bool   `json:"active"`
+}
+
 // TmuxContext represents the current execution context relative to tmux.
 type TmuxContext int64
 
