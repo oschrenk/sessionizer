@@ -33,7 +33,7 @@ var layoutCmd = &cobra.Command{
 
 		if apply {
 			server := &tmux.Server{}
-			err := core.ApplyLayout(server, layout)
+			err := core.ApplyLayout(server, *layout)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error applying layout: %v\n", err)
 				os.Exit(1)
