@@ -185,6 +185,19 @@ func (*Server) SelectWindow(targetWindow string) error {
 	return err
 }
 
+// SelectPane selects (focuses) the specified pane.
+// The target can be a pane ID, or a pane index.
+func (*Server) SelectPane(targetPane string) error {
+	args := []string{
+		"select-pane",
+		"-t",
+		targetPane,
+	}
+
+	_, _, err := run(args)
+	return err
+}
+
 // HasSession checks if a tmux session with the given name exists.
 // Returns true if the session exists, false otherwise.
 func (*Server) HasSession(name string) bool {
