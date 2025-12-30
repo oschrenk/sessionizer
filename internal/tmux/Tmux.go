@@ -112,6 +112,34 @@ func (s *Server) CurrentSession() (Session, error) {
 	return sessions[0], nil
 }
 
+// CurrentWindow returns the currently active window
+func (*Server) CurrentWindow() (Window, error) {
+	const windowFormat = "#{window_id}:#{window_active}:#{window_active_clients}:#{window_name}"
+
+	args := []string{
+		"display-message",
+		"-p",
+		windowFormat,
+	}
+
+	out, _, err := run(args)
+	if err != nil {
+		return Window{}, err
+	}
+
+	result := strings.Split(strings.TrimSpace(out), ":")
+	if len(result) != 4 {
+		return Window{}, fmt.Errorf("failed to parse window output: %s", out)
+	}
+
+	id := result[0]
+	active, _ := strconv.ParseBool(result[1])
+	activeClient, _ := strconv.Atoi(result[2])
+	name := result[3]
+
+	return Window{Id: id, Active: active, ActiveClients: activeClient, Name: name}, nil
+}
+
 // Lists all sessions managed by this server.
 func (*Server) ListSessions(detachedOnly bool) ([]Session, error) {
 	return listSessions(detachedOnly, "")
