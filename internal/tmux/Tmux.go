@@ -260,6 +260,21 @@ func (*Server) SelectPane(targetPane string) error {
 	return err
 }
 
+// SendKeys sends keys/commands to the specified pane.
+// Automatically sends Enter (C-m) after the keys.
+func (*Server) SendKeys(targetPane string, keys string) error {
+	args := []string{
+		"send-keys",
+		"-t",
+		targetPane,
+		keys,
+		"C-m",
+	}
+
+	_, _, err := run(args)
+	return err
+}
+
 // HasSession checks if a tmux session with the given name exists.
 // Returns true if the session exists, false otherwise.
 func (*Server) HasSession(name string) bool {
