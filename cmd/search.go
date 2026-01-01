@@ -6,7 +6,6 @@ import (
 
 	fuzzyfinder "github.com/ktr0731/go-fuzzyfinder"
 	"github.com/oschrenk/sessionizer/core"
-	"github.com/oschrenk/sessionizer/internal/tmux"
 	"github.com/oschrenk/sessionizer/model"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,8 +29,7 @@ func search(projects []model.Entry) (model.Entry, error) {
 }
 
 func startSession(project model.Entry) {
-	server := new(tmux.Server)
-	_, err := server.CreateOrAttachSession(project.Label, project.Path)
+	err := core.StartSession(project.Label, project.Path)
 	if err != nil {
 		panic(err)
 	}

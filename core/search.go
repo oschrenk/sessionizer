@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/oschrenk/sessionizer/internal/tmux"
 	"github.com/oschrenk/sessionizer/model"
 )
 
@@ -84,4 +85,14 @@ func BuildEntries(config model.Config) ([]model.Entry, error) {
 	}
 
 	return allProjects, nil
+}
+
+// StartSession creates or attaches to a tmux session with the given name and path
+func StartSession(name string, path string) error {
+	server := new(tmux.Server)
+	_, err := server.CreateOrAttachSession(name, path)
+	if err != nil {
+		return err
+	}
+	return nil
 }
