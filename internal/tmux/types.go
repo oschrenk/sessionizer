@@ -19,6 +19,7 @@ type Window struct {
 	Active        bool   `json:"active"`
 	ActiveClients int    `json:"active_clients"`
 	Name          string `json:"name"`
+	Panes         []Pane `json:"panes"`
 }
 
 // Pane represents a tmux pane within a window.

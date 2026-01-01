@@ -24,6 +24,15 @@ type shallowSession struct {
 	Path     string
 }
 
+// shallowWindow represents a window without its panes populated.
+// Used internally for parsing tmux output before hydration.
+type shallowWindow struct {
+	Id            string
+	Active        bool
+	ActiveClients int
+	Name          string
+}
+
 // normalizeName converts a session name to a tmux-safe
 // format y replacing problematic characters
 // - (colons, spaces, dots) with dashes and converting to lowercase.
@@ -54,6 +63,20 @@ func parseSession(line string) (shallowSession, bool) {
 	return session, true
 }
 
+func parseWindow(line string) (shallowWindow, bool) {
+	result := strings.Split(line, windowSeparator)
+	if len(result) != 4 {
+		return shallowWindow{}, false
+	}
+	id := result[0]
+	active, _ := strconv.ParseBool(result[1])
+	activeClient, _ := strconv.Atoi(result[2])
+	name := result[3]
+
+	window := shallowWindow{Id: id, Active: active, ActiveClients: activeClient, Name: name}
+	return window, true
+}
+
 // hydrateSession converts a shallowSession to a full Session by fetching its windows.
 func (s *Server) hydrateSession(shallow shallowSession) (Session, error) {
 	windows, err := s.ListWindows(shallow.Id)
@@ -67,6 +90,22 @@ func (s *Server) hydrateSession(shallow shallowSession) (Session, error) {
 		Attached: shallow.Attached,
 		Path:     shallow.Path,
 		Windows:  windows,
+	}, nil
+}
+
+// hydrateWindow converts a shallowWindow to a full Window by fetching its panes.
+func (s *Server) hydrateWindow(shallow shallowWindow) (Window, error) {
+	panes, err := s.ListPanes(shallow.Id)
+	if err != nil {
+		return Window{}, err
+	}
+
+	return Window{
+		Id:            shallow.Id,
+		Active:        shallow.Active,
+		ActiveClients: shallow.ActiveClients,
+		Name:          shallow.Name,
+		Panes:         panes,
 	}, nil
 }
 
@@ -138,7 +177,7 @@ func (s *Server) CurrentSession() (Session, error) {
 }
 
 // CurrentWindow returns the currently active window
-func (*Server) CurrentWindow() (Window, error) {
+func (s *Server) CurrentWindow() (Window, error) {
 	const windowFormat = "#{window_id}:#{window_active}:#{window_active_clients}:#{window_name}"
 
 	args := []string{
@@ -152,17 +191,12 @@ func (*Server) CurrentWindow() (Window, error) {
 		return Window{}, err
 	}
 
-	result := strings.Split(strings.TrimSpace(out), ":")
-	if len(result) != 4 {
+	shallow, ok := parseWindow(strings.TrimSpace(out))
+	if !ok {
 		return Window{}, fmt.Errorf("failed to parse window output: %s", out)
 	}
 
-	id := result[0]
-	active, _ := strconv.ParseBool(result[1])
-	activeClient, _ := strconv.Atoi(result[2])
-	name := result[3]
-
-	return Window{Id: id, Active: active, ActiveClients: activeClient, Name: name}, nil
+	return s.hydrateWindow(shallow)
 }
 
 // Lists all sessions managed by this server.
@@ -185,7 +219,7 @@ func (s *Server) ListSessions(detachedOnly bool) ([]Session, error) {
 }
 
 // Lists all Windows of the targeted session
-func (*Server) ListWindows(sessionId string) ([]Window, error) {
+func (s *Server) ListWindows(sessionId string) ([]Window, error) {
 	args := []string{
 		"list-windows",
 		"-t",
@@ -202,16 +236,15 @@ func (*Server) ListWindows(sessionId string) ([]Window, error) {
 	windows := []Window{}
 
 	for _, line := range lines {
-		result := strings.Split(line, windowSeparator)
-		if len(result) != 4 {
+		shallow, ok := parseWindow(line)
+		if !ok {
 			continue
 		}
-		id := result[0]
-		active, _ := strconv.ParseBool(result[1])
-		activeClient, _ := strconv.Atoi(result[2])
-		name := result[3]
 
-		window := Window{Id: id, Active: active, ActiveClients: activeClient, Name: name}
+		window, err := s.hydrateWindow(shallow)
+		if err != nil {
+			return nil, err
+		}
 
 		windows = append(windows, window)
 	}
