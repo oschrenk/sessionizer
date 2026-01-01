@@ -120,7 +120,7 @@ func StartSession(name string, path string) error {
 			if err != nil {
 				return err
 			}
-			err = ApplyLayout(server, *layout)
+			err = ApplyLayout(server, session, *layout)
 			if err != nil {
 				return err
 			}

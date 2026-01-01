@@ -7,6 +7,6 @@ import (
 
 // ApplyLayout applies a tmuxp layout configuration
 // TODO: Implement layout application logic
-func ApplyLayout(server *tmux.Server, layout tmuxp.Layout) error {
+func ApplyLayout(server *tmux.Server, session tmux.Session, layout tmuxp.Layout) error {
 	return nil
 }
