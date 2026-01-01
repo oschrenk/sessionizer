@@ -41,8 +41,9 @@ type Window struct {
 }
 
 type Pane struct {
-	ShellCommand []string `yaml:"shell_command"`
-	Focus        bool     `yaml:"focus"`
+	ShellCommand   []string `yaml:"shell_command"`
+	Focus          bool     `yaml:"focus"`
+	StartDirectory string   `yaml:"start_directory"`
 }
 
 func Simple(name string, path string) Layout {
@@ -83,8 +84,15 @@ func ReadLayoutFromFile(filePath string) (*Layout, error) {
 		if len(window.Panes) == 0 {
 			return nil, fmt.Errorf("window %d must have at least one pane", i)
 		}
-		// Expand ~ and environment variables in start directory
+		// Expand ~ and environment variables in window start directory
 		layout.Windows[i].StartDirectory = expandPath(window.StartDirectory)
+
+		// Expand ~ and environment variables in pane start directories
+		for j, pane := range window.Panes {
+			if pane.StartDirectory != "" {
+				layout.Windows[i].Panes[j].StartDirectory = expandPath(pane.StartDirectory)
+			}
+		}
 	}
 
 	return &layout, nil

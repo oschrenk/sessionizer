@@ -18,10 +18,14 @@ func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.
 	initialWindow := initialSession.Windows[0]
 	initialPaneId := initialWindow.Panes[0].Id
 
-	// TODO this should be done during session creation
-	// Change directory in first pane to match layout's start_directory
-	if firstLayoutWindow.StartDirectory != "" {
-		cdCmd := fmt.Sprintf("cd %s", firstLayoutWindow.StartDirectory)
+	// Change directory in first pane
+	// Use pane's start_directory if set, otherwise window's start_directory
+	firstPaneDir := firstLayoutWindow.Panes[0].StartDirectory
+	if firstPaneDir == "" {
+		firstPaneDir = firstLayoutWindow.StartDirectory
+	}
+	if firstPaneDir != "" {
+		cdCmd := fmt.Sprintf("cd %s", firstPaneDir)
 		if err := server.SendKeys(initialPaneId, cdCmd); err != nil {
 			return fmt.Errorf("cd to start directory: %w", err)
 		}
@@ -36,7 +40,13 @@ func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.
 
 	// Split window and create additional panes
 	if len(firstLayoutWindow.Panes) >= 2 {
-		secondPaneId, err := server.SplitPane(initialPaneId, tmux.Horizontal, firstLayoutWindow.StartDirectory)
+		// Use second pane's start_directory if set, otherwise window's start_directory
+		secondPaneDir := firstLayoutWindow.Panes[1].StartDirectory
+		if secondPaneDir == "" {
+			secondPaneDir = firstLayoutWindow.StartDirectory
+		}
+
+		secondPaneId, err := server.SplitPane(initialPaneId, tmux.Horizontal, secondPaneDir)
 		if err != nil {
 			return fmt.Errorf("split pane: %w", err)
 		}
