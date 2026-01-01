@@ -8,8 +8,11 @@ import (
 	"strings"
 
 	"github.com/oschrenk/sessionizer/internal/tmux"
+	"github.com/oschrenk/sessionizer/internal/tmuxp"
 	"github.com/oschrenk/sessionizer/model"
 )
+
+const layoutFileName = ".sessionizer.yml"
 
 // EntriesFromDir finds all project directories within a given directory
 // that match the rooter patterns, ignoring specified directories
@@ -92,6 +95,8 @@ func StartSession(name string, path string) error {
 	server := new(tmux.Server)
 
 	var session tmux.Session
+	var freshlyCreated bool
+
 	sessionPtr, err := server.SessionByName(name)
 	if err != nil {
 		return err
@@ -102,8 +107,24 @@ func StartSession(name string, path string) error {
 		if err != nil {
 			return err
 		}
+		freshlyCreated = true
 	} else {
 		session = *sessionPtr
+		freshlyCreated = false
+	}
+
+	if freshlyCreated {
+		layoutPath := filepath.Join(path, layoutFileName)
+		if _, err := os.Stat(layoutPath); err == nil {
+			layout, err := tmuxp.ReadLayoutFromFile(layoutPath)
+			if err != nil {
+				return err
+			}
+			err = ApplyLayout(server, *layout)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	err = server.AttachSession(session)
