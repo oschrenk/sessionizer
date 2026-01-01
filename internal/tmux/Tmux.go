@@ -423,6 +423,7 @@ func (s *Server) SessionByName(name string) (*Session, error) {
 //
 // but are problematic, but since we normalize before, we should be fine
 func (s *Server) AddSession(name string, path string) (Session, error) {
+	name = normalizeName(name)
 	const sessionFormat = "#{session_id}:#{session_name}:#{session_attached}:#{session_path}"
 
 	args := []string{
@@ -519,7 +520,6 @@ func switchClient(sessionName string) error {
 //   - Detached: attaches to the session using attach-session
 //   - Serverless: switches the client to the session using switch-client
 func (s *Server) CreateOrAttachSession(name string, path string) (Session, error) {
-	name = normalizeName(name)
 	var session Session
 	sessionPtr, err := s.SessionByName(name)
 	if err != nil {
