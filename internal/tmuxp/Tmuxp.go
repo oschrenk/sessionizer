@@ -3,9 +3,21 @@ package tmuxp
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
+
+// expandPath expands ~ to home directory and environment variables
+func expandPath(path string) string {
+	if strings.HasPrefix(path, "~/") {
+		home, err := os.UserHomeDir()
+		if err == nil {
+			path = strings.Replace(path, "~", home, 1)
+		}
+	}
+	return os.ExpandEnv(path)
+}
 
 type LayoutType string
 
@@ -71,6 +83,8 @@ func ReadLayoutFromFile(filePath string) (*Layout, error) {
 		if len(window.Panes) == 0 {
 			return nil, fmt.Errorf("window %d must have at least one pane", i)
 		}
+		// Expand ~ and environment variables in start directory
+		layout.Windows[i].StartDirectory = expandPath(window.StartDirectory)
 	}
 
 	return &layout, nil
