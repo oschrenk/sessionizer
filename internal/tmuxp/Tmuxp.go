@@ -1,6 +1,7 @@
 package tmuxp
 
 import (
+	"fmt"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -60,6 +61,10 @@ func ReadLayoutFromFile(filePath string) (*Layout, error) {
 	err = yaml.Unmarshal(data, &layout)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(layout.Windows) == 0 {
+		return nil, fmt.Errorf("layout must have at least one window")
 	}
 
 	return &layout, nil
