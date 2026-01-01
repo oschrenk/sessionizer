@@ -385,8 +385,14 @@ func (*Server) HasSession(name string) bool {
 
 // SessionByName retrieves a Session by name.
 //
-// Returns error if session doesn't exist.
+// Returns nil pointer if session not found
 func (s *Server) SessionByName(name string) (*Session, error) {
+	name = normalizeName(name)
+
+	if !s.HasSession(name) {
+		return nil, nil
+	}
+
 	const sessionFormat = "#{session_id}:#{session_name}:#{session_attached}:#{session_path}"
 
 	args := []string{
@@ -523,6 +529,10 @@ func (s *Server) CreateOrAttachSession(name string, path string) (Session, error
 	var session Session
 	sessionPtr, err := s.SessionByName(name)
 	if err != nil {
+		return Session{}, err
+	}
+
+	if sessionPtr == nil {
 		session, err = s.AddSession(name, path)
 		if err != nil {
 			return Session{}, err
