@@ -15,6 +15,15 @@ const dot = "."
 const dash = "-"
 const space = " "
 
+// shallowSession represents a session without its windows populated.
+// Used internally for parsing tmux output before hydration.
+type shallowSession struct {
+	Id       string
+	Name     string
+	Attached bool
+	Path     string
+}
+
 // normalizeName converts a session name to a tmux-safe
 // format y replacing problematic characters
 // - (colons, spaces, dots) with dashes and converting to lowercase.
@@ -31,18 +40,34 @@ func run(args []string) (string, string, error) {
 	return shell.Run("tmux", args)
 }
 
-func parseSession(line string) (Session, bool) {
+func parseSession(line string) (shallowSession, bool) {
 	result := strings.Split(line, sessionSeparator)
 	if len(result) != 4 {
-		return Session{}, false
+		return shallowSession{}, false
 	}
 	id := result[0]
 	name := result[1]
 	attached, _ := strconv.ParseBool(result[2])
 	path := result[3]
 
-	session := Session{Id: id, Name: name, Attached: attached, Path: path}
+	session := shallowSession{Id: id, Name: name, Attached: attached, Path: path}
 	return session, true
+}
+
+// hydrateSession converts a shallowSession to a full Session by fetching its windows.
+func (s *Server) hydrateSession(shallow shallowSession) (Session, error) {
+	windows, err := s.ListWindows(shallow.Id)
+	if err != nil {
+		return Session{}, err
+	}
+
+	return Session{
+		Id:       shallow.Id,
+		Name:     shallow.Name,
+		Attached: shallow.Attached,
+		Path:     shallow.Path,
+		Windows:  windows,
+	}, nil
 }
 
 func (*Server) currentSessionId() (string, error) {
@@ -59,7 +84,7 @@ func (*Server) currentSessionId() (string, error) {
 	return strings.TrimSpace(out), nil
 }
 
-func listSessions(detachedOnly bool, sessionId string) ([]Session, error) {
+func listSessions(detachedOnly bool, sessionId string) ([]shallowSession, error) {
 	const sessionFormat = "#{session_id}:#{session_name}:#{session_attached}:#{session_path}"
 
 	args := []string{
@@ -81,7 +106,7 @@ func listSessions(detachedOnly bool, sessionId string) ([]Session, error) {
 	}
 
 	lines := strings.Split(out, "\n")
-	sessions := []Session{}
+	sessions := []shallowSession{}
 
 	for _, line := range lines {
 		session, ok := parseSession(line)
@@ -109,7 +134,7 @@ func (s *Server) CurrentSession() (Session, error) {
 		return Session{}, fmt.Errorf("no session found with id: %s", currentSessionId)
 	}
 
-	return sessions[0], nil
+	return s.hydrateSession(sessions[0])
 }
 
 // CurrentWindow returns the currently active window
@@ -141,8 +166,22 @@ func (*Server) CurrentWindow() (Window, error) {
 }
 
 // Lists all sessions managed by this server.
-func (*Server) ListSessions(detachedOnly bool) ([]Session, error) {
-	return listSessions(detachedOnly, "")
+func (s *Server) ListSessions(detachedOnly bool) ([]Session, error) {
+	shallowSessions, err := listSessions(detachedOnly, "")
+	if err != nil {
+		return nil, err
+	}
+
+	sessions := make([]Session, 0, len(shallowSessions))
+	for _, shallow := range shallowSessions {
+		session, err := s.hydrateSession(shallow)
+		if err != nil {
+			return nil, err
+		}
+		sessions = append(sessions, session)
+	}
+
+	return sessions, nil
 }
 
 // Lists all Windows of the targeted session
@@ -314,7 +353,7 @@ func (*Server) HasSession(name string) bool {
 // Retrieve a Session by name.
 //
 // Returns error if session doesn't exist.
-func (*Server) GetSessionByName(name string) (Session, error) {
+func (s *Server) GetSessionByName(name string) (Session, error) {
 	const sessionFormat = "#{session_id}:#{session_name}:#{session_attached}:#{session_path}"
 
 	args := []string{
@@ -330,12 +369,12 @@ func (*Server) GetSessionByName(name string) (Session, error) {
 		return Session{}, err
 	}
 
-	session, ok := parseSession(strings.TrimSpace(out))
+	shallow, ok := parseSession(strings.TrimSpace(out))
 	if !ok {
 		return Session{}, fmt.Errorf("failed to parse session output: %s", out)
 	}
 
-	return session, nil
+	return s.hydrateSession(shallow)
 }
 
 // Add session
@@ -345,7 +384,7 @@ func (*Server) GetSessionByName(name string) (Session, error) {
 // - the char `.`
 //
 // but are problematic, but since we normalize before, we should be fine
-func (*Server) AddSession(name string, path string) (Session, error) {
+func (s *Server) AddSession(name string, path string) (Session, error) {
 	const sessionFormat = "#{session_id}:#{session_name}:#{session_attached}:#{session_path}"
 
 	args := []string{
@@ -364,12 +403,12 @@ func (*Server) AddSession(name string, path string) (Session, error) {
 		return Session{}, err
 	}
 
-	session, ok := parseSession(strings.TrimSpace(out))
+	shallow, ok := parseSession(strings.TrimSpace(out))
 	if !ok {
 		return Session{}, fmt.Errorf("failed to parse session output: %s", out)
 	}
 
-	return session, nil
+	return s.hydrateSession(shallow)
 }
 
 func getContext() TmuxContext {
