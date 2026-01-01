@@ -67,5 +67,11 @@ func ReadLayoutFromFile(filePath string) (*Layout, error) {
 		return nil, fmt.Errorf("layout must have at least one window")
 	}
 
+	for i, window := range layout.Windows {
+		if len(window.Panes) == 0 {
+			return nil, fmt.Errorf("window %d must have at least one pane", i)
+		}
+	}
+
 	return &layout, nil
 }
