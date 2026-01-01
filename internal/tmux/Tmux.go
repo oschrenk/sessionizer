@@ -275,6 +275,29 @@ func (*Server) SendKeys(targetPane string, keys string) error {
 	return err
 }
 
+// SplitPane splits the specified pane and returns the new pane ID.
+// Direction can be Horizontal (left/right) or Vertical (top/bottom).
+func (*Server) SplitPane(targetPane string, direction Direction, startDirectory string) (string, error) {
+	args := []string{
+		"split-window",
+		"-t",
+		targetPane,
+	}
+
+	if direction == Horizontal {
+		args = append(args, "-h")
+	}
+
+	args = append(args, "-c", startDirectory, "-P", "-F", "#{pane_id}")
+
+	out, _, err := run(args)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(out), nil
+}
+
 // HasSession checks if a tmux session with the given name exists.
 // Returns true if the session exists, false otherwise.
 func (*Server) HasSession(name string) bool {

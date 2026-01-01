@@ -27,6 +27,16 @@ type Pane struct {
 	Active bool   `json:"active"`
 }
 
+// Direction represents the split direction for panes.
+type Direction int
+
+const (
+	// Horizontal splits the pane horizontally (left/right).
+	Horizontal Direction = iota
+	// Vertical splits the pane vertically (top/bottom).
+	Vertical
+)
+
 // TmuxContext represents the current execution context relative to tmux.
 type TmuxContext int64
 
