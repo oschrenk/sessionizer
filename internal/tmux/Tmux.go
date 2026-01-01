@@ -383,10 +383,10 @@ func (*Server) HasSession(name string) bool {
 	return err == nil
 }
 
-// Retrieve a Session by name.
+// SessionByName retrieves a Session by name.
 //
 // Returns error if session doesn't exist.
-func (s *Server) GetSessionByName(name string) (Session, error) {
+func (s *Server) SessionByName(name string) (*Session, error) {
 	const sessionFormat = "#{session_id}:#{session_name}:#{session_attached}:#{session_path}"
 
 	args := []string{
@@ -399,15 +399,20 @@ func (s *Server) GetSessionByName(name string) (Session, error) {
 
 	out, _, err := run(args)
 	if err != nil {
-		return Session{}, err
+		return nil, err
 	}
 
 	shallow, ok := parseSession(strings.TrimSpace(out))
 	if !ok {
-		return Session{}, fmt.Errorf("failed to parse session output: %s", out)
+		return nil, fmt.Errorf("failed to parse session output: %s", out)
 	}
 
-	return s.hydrateSession(shallow)
+	session, err := s.hydrateSession(shallow)
+	if err != nil {
+		return nil, err
+	}
+
+	return &session, nil
 }
 
 // Add session
@@ -515,12 +520,15 @@ func switchClient(sessionName string) error {
 //   - Serverless: switches the client to the session using switch-client
 func (s *Server) CreateOrAttachSession(name string, path string) (Session, error) {
 	name = normalizeName(name)
-	session, err := s.GetSessionByName(name)
+	var session Session
+	sessionPtr, err := s.SessionByName(name)
 	if err != nil {
 		session, err = s.AddSession(name, path)
 		if err != nil {
 			return Session{}, err
 		}
+	} else {
+		session = *sessionPtr
 	}
 
 	var attachErr error
