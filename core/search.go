@@ -90,9 +90,26 @@ func BuildEntries(config model.Config) ([]model.Entry, error) {
 // StartSession creates or attaches to a tmux session with the given name and path
 func StartSession(name string, path string) error {
 	server := new(tmux.Server)
-	_, err := server.CreateOrAttachSession(name, path)
+
+	var session tmux.Session
+	sessionPtr, err := server.SessionByName(name)
 	if err != nil {
 		return err
 	}
+
+	if sessionPtr == nil {
+		session, err = server.AddSession(name, path)
+		if err != nil {
+			return err
+		}
+	} else {
+		session = *sessionPtr
+	}
+
+	err = server.AttachSession(session)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

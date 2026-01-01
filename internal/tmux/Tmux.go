@@ -515,45 +515,22 @@ func switchClient(sessionName string) error {
 	return nil
 }
 
-// CreateOrAttachSession creates a new session or attaches to an existing one with the given name.
-//
-// The session name is normalized (lowercased, special chars replaced with dashes) before use.
-//
-// If the session doesn't exist, it will be created with the specified path as the starting directory.
+// AttachSession attaches to an existing session.
 //
 // The behavior depends on the current tmux context:
 //   - Attached: switches to the session using switch-session
 //   - Detached: attaches to the session using attach-session
 //   - Serverless: switches the client to the session using switch-client
-func (s *Server) CreateOrAttachSession(name string, path string) (Session, error) {
-	var session Session
-	sessionPtr, err := s.SessionByName(name)
-	if err != nil {
-		return Session{}, err
-	}
-
-	if sessionPtr == nil {
-		session, err = s.AddSession(name, path)
-		if err != nil {
-			return Session{}, err
-		}
-	} else {
-		session = *sessionPtr
-	}
-
-	var attachErr error
+func (s *Server) AttachSession(session Session) error {
+	var err error
 	switch getContext() {
 	case Attached:
-		attachErr = switchSession(name)
+		err = switchSession(session.Name)
 	case Detached:
-		attachErr = attachSession(name)
+		err = attachSession(session.Name)
 	case Serverless:
-		attachErr = switchClient(name)
+		err = switchClient(session.Name)
 	}
 
-	if attachErr != nil {
-		return Session{}, attachErr
-	}
-
-	return session, nil
+	return err
 }
