@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/oschrenk/sessionizer/internal/tmux"
 	"github.com/oschrenk/sessionizer/internal/tmuxp"
@@ -17,6 +18,15 @@ func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.
 	firstLayoutWindow := layout.Windows[0]
 	initialWindow := initialSession.Windows[0]
 	initialPaneId := initialWindow.Panes[0].Id
+
+	// HACK: Fish shell (and potentially other shells) send terminal capability
+	// queries (like ^[[?997;1n for bracketed paste mode) during initialization.
+	// These escape sequences can appear in the terminal if we send commands too
+	// quickly. We wait for the shell to finish initializing, then clear the
+	// screen to remove any visible escape sequences before sending actual commands.
+	time.Sleep(200 * time.Millisecond)
+	server.SendKeys(initialPaneId, "clear")
+	time.Sleep(50 * time.Millisecond)
 
 	// Change directory in first pane
 	// Use pane's start_directory if set, otherwise window's start_directory
@@ -55,6 +65,11 @@ func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.
 		if firstLayoutWindow.Panes[1].Focus {
 			focusedPaneId = secondPaneId
 		}
+
+		// HACK: Same as above - wait for shell initialization and clear escape sequences
+		time.Sleep(200 * time.Millisecond)
+		server.SendKeys(secondPaneId, "clear")
+		time.Sleep(50 * time.Millisecond)
 	}
 
 	// Send shell commands to panes
