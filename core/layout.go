@@ -11,7 +11,7 @@ import (
 
 // ApplyLayout applies a tmuxp layout configuration
 //
-// MVP: only 1st window and two panes
+// MVP: only 1st window, supports multiple panes
 func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.Layout) error {
 
 	// Get initial window and pane
@@ -56,34 +56,31 @@ func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.
 	}
 
 	// Split window and create additional panes
-	if len(firstLayoutWindow.Panes) >= 2 {
-		// Use second pane's start_directory if set, otherwise window's start_directory
-		secondPaneDir := firstLayoutWindow.Panes[1].StartDirectory
-		if secondPaneDir == "" {
-			secondPaneDir = firstLayoutWindow.StartDirectory
+	for i := 1; i < len(firstLayoutWindow.Panes); i++ {
+		// Use pane's start_directory if set, otherwise window's start_directory
+		paneDir := firstLayoutWindow.Panes[i].StartDirectory
+		if paneDir == "" {
+			paneDir = firstLayoutWindow.StartDirectory
 		}
 
-		secondPaneId, err := server.SplitPane(initialPaneId, tmux.Horizontal, secondPaneDir)
+		newPaneId, err := server.SplitPane(initialPaneId, tmux.Horizontal, paneDir)
 		if err != nil {
-			return fmt.Errorf("split pane: %w", err)
+			return fmt.Errorf("split pane %d: %w", i, err)
 		}
-		paneIds = append(paneIds, secondPaneId)
+		paneIds = append(paneIds, newPaneId)
 
-		if firstLayoutWindow.Panes[1].Focus {
-			focusedPaneId = secondPaneId
+		if firstLayoutWindow.Panes[i].Focus {
+			focusedPaneId = newPaneId
 		}
 
 		// HACK: Same as above - wait for shell initialization and clear escape sequences
 		time.Sleep(200 * time.Millisecond)
-		server.SendKeys(secondPaneId, "clear")
+		server.SendKeys(newPaneId, "clear")
 		time.Sleep(50 * time.Millisecond)
 	}
 
 	// Send shell commands to panes
 	for i, pane := range firstLayoutWindow.Panes {
-		if i >= len(paneIds) {
-			break // MVP: only handle first 2 panes
-		}
 		if len(pane.ShellCommand) > 0 {
 			// Join all command arguments into a single string
 			cmd := strings.Join(pane.ShellCommand, " ")
