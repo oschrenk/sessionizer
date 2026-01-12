@@ -79,6 +79,13 @@ func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.
 		time.Sleep(50 * time.Millisecond)
 	}
 
+	// Apply window layout type if specified
+	if firstLayoutWindow.Layout != "" {
+		if err := server.SelectLayout(initialWindow.Id, string(firstLayoutWindow.Layout)); err != nil {
+			return fmt.Errorf("select layout: %w", err)
+		}
+	}
+
 	// Send shell commands to panes
 	for i, pane := range firstLayoutWindow.Panes {
 		if len(pane.ShellCommand) > 0 {

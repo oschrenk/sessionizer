@@ -333,6 +333,21 @@ func (*Server) RenameWindow(targetWindow string, newName string) error {
 	return err
 }
 
+// SelectLayout applies a layout to the specified window.
+// The target can be a window ID, window index, or window name.
+// layoutType should be one of: even-horizontal, even-vertical, main-horizontal, main-vertical, tiled.
+func (*Server) SelectLayout(targetWindow string, layoutType string) error {
+	args := []string{
+		"select-layout",
+		"-t",
+		targetWindow,
+		layoutType,
+	}
+
+	_, _, err := run(args)
+	return err
+}
+
 // SelectPane selects (focuses) the specified pane.
 // The target can be a pane ID, or a pane index.
 func (*Server) SelectPane(targetPane string) error {
