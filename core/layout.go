@@ -19,6 +19,13 @@ func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.
 	initialWindow := initialSession.Windows[0]
 	initialPaneId := initialWindow.Panes[0].Id
 
+	// Rename window if name is specified in layout
+	if firstLayoutWindow.Name != "" {
+		if err := server.RenameWindow(initialWindow.Id, firstLayoutWindow.Name); err != nil {
+			return fmt.Errorf("rename window: %w", err)
+		}
+	}
+
 	// HACK: Fish shell (and potentially other shells) send terminal capability
 	// queries (like ^[[?997;1n for bracketed paste mode) during initialization.
 	// These escape sequences can appear in the terminal if we send commands too

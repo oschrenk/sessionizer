@@ -319,6 +319,20 @@ func (*Server) SelectWindow(targetWindow string) error {
 	return err
 }
 
+// RenameWindow renames the specified window to the given name.
+// The target can be a window ID, window index, or window name.
+func (*Server) RenameWindow(targetWindow string, newName string) error {
+	args := []string{
+		"rename-window",
+		"-t",
+		targetWindow,
+		newName,
+	}
+
+	_, _, err := run(args)
+	return err
+}
+
 // SelectPane selects (focuses) the specified pane.
 // The target can be a pane ID, or a pane index.
 func (*Server) SelectPane(targetPane string) error {
