@@ -9,19 +9,11 @@ import (
 	"github.com/oschrenk/sessionizer/internal/tmuxp"
 )
 
-// ApplyLayout applies a tmuxp layout configuration
-//
-// MVP: only 1st window, supports multiple panes
-func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.Layout) error {
-
-	// Get initial window and pane
-	firstLayoutWindow := layout.Windows[0]
-	initialWindow := initialSession.Windows[0]
-	initialPaneId := initialWindow.Panes[0].Id
-
+// applyWindowLayout configures a single window according to its layout specification
+func applyWindowLayout(server *tmux.Server, windowId string, initialPaneId string, layoutWindow tmuxp.Window) error {
 	// Rename window if name is specified in layout
-	if firstLayoutWindow.Name != "" {
-		if err := server.RenameWindow(initialWindow.Id, firstLayoutWindow.Name); err != nil {
+	if layoutWindow.Name != "" {
+		if err := server.RenameWindow(windowId, layoutWindow.Name); err != nil {
 			return fmt.Errorf("rename window: %w", err)
 		}
 	}
@@ -37,9 +29,9 @@ func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.
 
 	// Change directory in first pane
 	// Use pane's start_directory if set, otherwise window's start_directory
-	firstPaneDir := firstLayoutWindow.Panes[0].StartDirectory
+	firstPaneDir := layoutWindow.Panes[0].StartDirectory
 	if firstPaneDir == "" {
-		firstPaneDir = firstLayoutWindow.StartDirectory
+		firstPaneDir = layoutWindow.StartDirectory
 	}
 	if firstPaneDir != "" {
 		cdCmd := fmt.Sprintf("cd %s", firstPaneDir)
@@ -51,16 +43,16 @@ func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.
 	// Track pane IDs for focus selection
 	paneIds := []string{initialPaneId}
 	var focusedPaneId string
-	if firstLayoutWindow.Panes[0].Focus {
+	if layoutWindow.Panes[0].Focus {
 		focusedPaneId = initialPaneId
 	}
 
 	// Split window and create additional panes
-	for i := 1; i < len(firstLayoutWindow.Panes); i++ {
+	for i := 1; i < len(layoutWindow.Panes); i++ {
 		// Use pane's start_directory if set, otherwise window's start_directory
-		paneDir := firstLayoutWindow.Panes[i].StartDirectory
+		paneDir := layoutWindow.Panes[i].StartDirectory
 		if paneDir == "" {
-			paneDir = firstLayoutWindow.StartDirectory
+			paneDir = layoutWindow.StartDirectory
 		}
 
 		newPaneId, err := server.SplitPane(initialPaneId, tmux.Horizontal, paneDir)
@@ -69,7 +61,7 @@ func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.
 		}
 		paneIds = append(paneIds, newPaneId)
 
-		if firstLayoutWindow.Panes[i].Focus {
+		if layoutWindow.Panes[i].Focus {
 			focusedPaneId = newPaneId
 		}
 
@@ -80,14 +72,14 @@ func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.
 	}
 
 	// Apply window layout type if specified
-	if firstLayoutWindow.Layout != "" {
-		if err := server.SelectLayout(initialWindow.Id, string(firstLayoutWindow.Layout)); err != nil {
+	if layoutWindow.Layout != "" {
+		if err := server.SelectLayout(windowId, string(layoutWindow.Layout)); err != nil {
 			return fmt.Errorf("select layout: %w", err)
 		}
 	}
 
 	// Send shell commands to panes
-	for i, pane := range firstLayoutWindow.Panes {
+	for i, pane := range layoutWindow.Panes {
 		if len(pane.ShellCommand) > 0 {
 			// Join all command arguments into a single string
 			cmd := strings.Join(pane.ShellCommand, " ")
@@ -102,6 +94,69 @@ func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.
 		if err := server.SelectPane(focusedPaneId); err != nil {
 			return fmt.Errorf("select pane: %w", err)
 		}
+	}
+
+	return nil
+}
+
+// ApplyLayout applies a tmuxp layout configuration
+//
+// Supports multiple windows with multiple panes
+func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.Layout) error {
+	// Track the first window ID to return focus at the end
+	firstWindowId := initialSession.Windows[0].Id
+
+	// Configure each window in the layout
+	for i, layoutWindow := range layout.Windows {
+		var windowId string
+		var initialPaneId string
+
+		if i == 0 {
+			// Use the existing initial window for the first layout window
+			windowId = initialSession.Windows[0].Id
+			initialPaneId = initialSession.Windows[0].Panes[0].Id
+		} else {
+			// Create a new window for additional layout windows
+			// Use window's start_directory if set, otherwise use session path
+			windowDir := layoutWindow.StartDirectory
+			if windowDir == "" {
+				windowDir = initialSession.Path
+			}
+
+			newWindowId, err := server.AddWindow(layoutWindow.Name, windowDir)
+			if err != nil {
+				return fmt.Errorf("create window %d: %w", i, err)
+			}
+			windowId = newWindowId
+
+			// Get the initial pane ID of the newly created window
+			windows, err := server.ListWindows(initialSession.Id)
+			if err != nil {
+				return fmt.Errorf("list windows: %w", err)
+			}
+			// Find the window we just created
+			for _, w := range windows {
+				if w.Id == newWindowId {
+					if len(w.Panes) > 0 {
+						initialPaneId = w.Panes[0].Id
+					}
+					break
+				}
+			}
+			if initialPaneId == "" {
+				return fmt.Errorf("could not find pane for new window %d", i)
+			}
+		}
+
+		// Apply the layout configuration to this window
+		if err := applyWindowLayout(server, windowId, initialPaneId, layoutWindow); err != nil {
+			return fmt.Errorf("apply window %d layout: %w", i, err)
+		}
+	}
+
+	// Return focus to the first window
+	if err := server.SelectWindow(firstWindowId); err != nil {
+		return fmt.Errorf("select first window: %w", err)
 	}
 
 	return nil
