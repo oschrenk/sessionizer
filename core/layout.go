@@ -10,7 +10,7 @@ import (
 )
 
 // applyWindowLayout configures a single window according to its layout specification
-func applyWindowLayout(server *tmux.Server, windowId string, initialPaneId string, layoutWindow tmuxp.Window) error {
+func applyWindowLayout(server *tmux.Server, windowId string, initialPaneId string, layoutWindow tmuxp.Window, sessionPath string) error {
 	// Rename window if name is specified in layout
 	if layoutWindow.Name != "" {
 		if err := server.RenameWindow(windowId, layoutWindow.Name); err != nil {
@@ -28,10 +28,13 @@ func applyWindowLayout(server *tmux.Server, windowId string, initialPaneId strin
 	time.Sleep(50 * time.Millisecond)
 
 	// Change directory in first pane
-	// Use pane's start_directory if set, otherwise window's start_directory
+	// Use pane's start_directory if set, otherwise window's start_directory, otherwise session path
 	firstPaneDir := layoutWindow.Panes[0].StartDirectory
 	if firstPaneDir == "" {
 		firstPaneDir = layoutWindow.StartDirectory
+	}
+	if firstPaneDir == "" {
+		firstPaneDir = sessionPath
 	}
 	if firstPaneDir != "" {
 		cdCmd := fmt.Sprintf("cd %s", firstPaneDir)
@@ -49,10 +52,13 @@ func applyWindowLayout(server *tmux.Server, windowId string, initialPaneId strin
 
 	// Split window and create additional panes
 	for i := 1; i < len(layoutWindow.Panes); i++ {
-		// Use pane's start_directory if set, otherwise window's start_directory
+		// Use pane's start_directory if set, otherwise window's start_directory, otherwise session path
 		paneDir := layoutWindow.Panes[i].StartDirectory
 		if paneDir == "" {
 			paneDir = layoutWindow.StartDirectory
+		}
+		if paneDir == "" {
+			paneDir = sessionPath
 		}
 
 		newPaneId, err := server.SplitPane(initialPaneId, tmux.Horizontal, paneDir)
@@ -149,7 +155,7 @@ func ApplyLayout(server *tmux.Server, initialSession tmux.Session, layout tmuxp.
 		}
 
 		// Apply the layout configuration to this window
-		if err := applyWindowLayout(server, windowId, initialPaneId, layoutWindow); err != nil {
+		if err := applyWindowLayout(server, windowId, initialPaneId, layoutWindow, initialSession.Path); err != nil {
 			return fmt.Errorf("apply window %d layout: %w", i, err)
 		}
 	}
