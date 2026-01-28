@@ -90,6 +90,58 @@ func TestReadLayoutFromFileNotFound(t *testing.T) {
 	}
 }
 
+func TestReadMultiWindowLayout(t *testing.T) {
+	layout, err := ReadLayoutFromFile("testdata/multi_window_layout.yaml")
+	if err != nil {
+		t.Fatalf("Failed to read layout from file: %v", err)
+	}
+
+	if len(layout.Windows) != 2 {
+		t.Fatalf("Expected 2 windows, got %d", len(layout.Windows))
+	}
+
+	// Check first window
+	devWindow := layout.Windows[0]
+	if devWindow.Name != "dev" {
+		t.Errorf("Expected window name 'dev', got '%s'", devWindow.Name)
+	}
+	if devWindow.Layout != MainVertical {
+		t.Errorf("Expected layout MainVertical, got %s", devWindow.Layout)
+	}
+	if len(devWindow.Panes) != 4 {
+		t.Errorf("Expected 4 panes in dev window, got %d", len(devWindow.Panes))
+	}
+
+	// Check that pane 3 has focus
+	focusCount := 0
+	for i, pane := range devWindow.Panes {
+		if pane.Focus {
+			focusCount++
+			if i != 2 {
+				t.Errorf("Expected pane 3 (index 2) to have focus, got pane %d", i+1)
+			}
+		}
+	}
+	if focusCount != 1 {
+		t.Errorf("Expected exactly 1 focused pane, got %d", focusCount)
+	}
+
+	// Check second window
+	logsWindow := layout.Windows[1]
+	if logsWindow.Name != "logs" {
+		t.Errorf("Expected window name 'logs', got '%s'", logsWindow.Name)
+	}
+	if logsWindow.Layout != EvenHorizontal {
+		t.Errorf("Expected layout EvenHorizontal, got %s", logsWindow.Layout)
+	}
+	if logsWindow.StartDirectory != "/var/log" {
+		t.Errorf("Expected start directory '/var/log', got '%s'", logsWindow.StartDirectory)
+	}
+	if len(logsWindow.Panes) != 1 {
+		t.Errorf("Expected 1 pane in logs window, got %d", len(logsWindow.Panes))
+	}
+}
+
 func TestYAMLMarshaling(t *testing.T) {
 	layout := Simple("marshal-test", "/test/path")
 
