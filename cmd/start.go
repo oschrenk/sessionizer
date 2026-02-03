@@ -16,6 +16,9 @@ func init() {
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start tmux with default session",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		initConfig()
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		defaultName := viper.GetString("default.name")
 		defaultPath := os.ExpandEnv(viper.GetString("default.path"))

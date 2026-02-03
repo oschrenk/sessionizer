@@ -46,6 +46,9 @@ func mapF[T, V any](ts []T, fn func(T) V) []V {
 var searchCmd = &cobra.Command{
 	Use:   "search",
 	Short: "Search sessions",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		initConfig()
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		config := model.Config{
 			DefaultName:    viper.GetString("default.name"),
