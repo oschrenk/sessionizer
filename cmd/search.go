@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -35,12 +36,45 @@ func startSession(project model.Entry) {
 	}
 }
 
-func mapF[T, V any](ts []T, fn func(T) V) []V {
+func mapF[T, V interface{}](ts []T, fn func(T) V) []V {
 	result := make([]V, len(ts))
 	for i, t := range ts {
 		result[i] = fn(t)
 	}
 	return result
+}
+
+// parseSearchEntries parses search.entries which can be a mix of strings and objects.
+// Strings are treated as paths (name auto-derived). Objects must have a "path" key
+// and an optional "name" key.
+func parseSearchEntries(raw interface{}) ([]model.SearchEntry, error) {
+	if raw == nil {
+		return nil, nil
+	}
+	slice, ok := raw.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("search.entries: expected array, got %T", raw)
+	}
+	entries := make([]model.SearchEntry, 0, len(slice))
+	for i, item := range slice {
+		switch v := item.(type) {
+		case string:
+			entries = append(entries, model.SearchEntry{Path: os.ExpandEnv(v)})
+		case map[string]interface{}:
+			path, ok := v["path"].(string)
+			if !ok {
+				return nil, fmt.Errorf("search.entries[%d]: missing or invalid 'path'", i)
+			}
+			entry := model.SearchEntry{Path: os.ExpandEnv(path)}
+			if name, ok := v["name"].(string); ok {
+				entry.Name = name
+			}
+			entries = append(entries, entry)
+		default:
+			return nil, fmt.Errorf("search.entries[%d]: expected string or object, got %T", i, item)
+		}
+	}
+	return entries, nil
 }
 
 var searchCmd = &cobra.Command{
@@ -50,11 +84,16 @@ var searchCmd = &cobra.Command{
 		initConfig()
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		searchEntries, err := parseSearchEntries(viper.Get("search.entries"))
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		config := model.Config{
 			DefaultName:    viper.GetString("default.name"),
 			DefaultPath:    os.ExpandEnv(viper.GetString("default.path")),
 			SearchDirs:     mapF(viper.GetStringSlice("search.directories"), os.ExpandEnv),
-			SearchEntries:  mapF(viper.GetStringSlice("search.entries"), os.ExpandEnv),
+			SearchEntries:  searchEntries,
 			Ignore:         viper.GetStringSlice("base.ignore"),
 			RooterPatterns: viper.GetStringSlice("base.rooter_patterns"),
 		}

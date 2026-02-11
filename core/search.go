@@ -57,10 +57,15 @@ func EntriesFromDir(dir string, ignore []string, rooterPatterns []string) ([]mod
 	return projects, nil
 }
 
-// EntryFromPath creates an entry from a given path
-func EntryFromPath(dir string) (*model.Entry, error) {
-	entry := &model.Entry{Label: filepath.Base(dir), Path: dir}
-	return entry, nil
+// EntryFromSearchEntry creates an entry from a SearchEntry.
+// If the entry has a custom name, it is used as the label.
+// Otherwise, the label is derived from the base of the path.
+func EntryFromSearchEntry(se model.SearchEntry) model.Entry {
+	label := se.Name
+	if label == "" {
+		label = filepath.Base(se.Path)
+	}
+	return model.Entry{Label: label, Path: se.Path}
 }
 
 // BuildEntries creates a list of all searchable entries based on configuration
@@ -80,11 +85,7 @@ func BuildEntries(config model.Config) ([]model.Entry, error) {
 
 	// add specific entries
 	for _, entryPath := range config.SearchEntries {
-		searchEntry, err := EntryFromPath(entryPath)
-		if err != nil {
-			return nil, err
-		}
-		allProjects = append(allProjects, *searchEntry)
+		allProjects = append(allProjects, EntryFromSearchEntry(entryPath))
 	}
 
 	return allProjects, nil

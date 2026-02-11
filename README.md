@@ -22,7 +22,8 @@ directories = [
 ]
 
 entries = [
-  "$HOME/.local/share/chezmoi"
+  "$HOME/.local/share/chezmoi",
+  { path = "$HOME/Obsidian/memex", name = "interest/memex" },
 ]
 ```
 
