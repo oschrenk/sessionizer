@@ -37,7 +37,7 @@ func applyWindowLayout(server *tmux.Server, windowId string, initialPaneId strin
 		firstPaneDir = sessionPath
 	}
 	if firstPaneDir != "" {
-		cdCmd := fmt.Sprintf("cd %s", firstPaneDir)
+		cdCmd := fmt.Sprintf("cd '%s'", firstPaneDir)
 		if err := server.SendKeys(initialPaneId, cdCmd); err != nil {
 			return fmt.Errorf("cd to start directory: %w", err)
 		}
