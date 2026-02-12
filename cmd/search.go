@@ -24,7 +24,7 @@ func search(projects []model.Entry) (model.Entry, error) {
 		},
 	)
 	if err != nil {
-		log.Fatal(err)
+		return model.Entry{}, err
 	}
 	return projects[idx], nil
 }
@@ -107,13 +107,22 @@ var searchCmd = &cobra.Command{
 		// search, select entry
 		project, err := search(projects)
 		if err != nil {
+			printPath, _ := cmd.Flags().GetBool("print-path")
+			if printPath {
+				return
+			}
 			log.Fatal(err)
 		}
 
+		printPath, _ := cmd.Flags().GetBool("print-path")
+		if printPath {
+			fmt.Println(project.Path)
+			return
+		}
 		startSession(project)
 	},
 }
 
 func init() {
-	// add flags and such here
+	searchCmd.Flags().Bool("print-path", false, "Print selected path to stdout instead of starting a tmux session")
 }

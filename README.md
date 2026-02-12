@@ -37,6 +37,14 @@ Lists all projects (directories with a `.git` sub-directory), and, upon selectio
 sessionizer search
 ```
 
+**Print selected project path**
+
+Opens the same fuzzy finder but prints the selected path to stdout instead of starting a tmux session. Useful for shell wrappers (e.g. `cd` to project directory). Exits silently if cancelled.
+
+```
+sessionizer search --print-path
+```
+
 **List all sessions**
 
 ```
