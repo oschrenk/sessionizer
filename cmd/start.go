@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/oschrenk/sessionizer/core"
 	"github.com/spf13/cobra"
@@ -23,7 +24,8 @@ var startCmd = &cobra.Command{
 		defaultName := viper.GetString("default.name")
 		defaultPath := os.ExpandEnv(viper.GetString("default.path"))
 
-		err := core.StartSession(defaultName, defaultPath)
+		configDir := filepath.Dir(viper.ConfigFileUsed())
+		err := core.StartSession(defaultName, defaultPath, "", configDir)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error switching to session: %s", defaultName)
 			os.Exit(1)

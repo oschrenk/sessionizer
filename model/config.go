@@ -2,8 +2,9 @@ package model
 
 // SearchEntry represents a manual entry with a path and optional custom name
 type SearchEntry struct {
-	Path string
-	Name string
+	Path   string
+	Name   string
+	Layout string
 }
 
 // Config holds the application configuration

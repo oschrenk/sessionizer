@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	fuzzyfinder "github.com/ktr0731/go-fuzzyfinder"
 	"github.com/oschrenk/sessionizer/core"
@@ -30,7 +31,8 @@ func search(projects []model.Entry) (model.Entry, error) {
 }
 
 func startSession(project model.Entry) {
-	err := core.StartSession(project.Label, project.Path)
+	configDir := filepath.Dir(viper.ConfigFileUsed())
+	err := core.StartSession(project.Label, project.Path, project.Layout, configDir)
 	if err != nil {
 		panic(err)
 	}
@@ -68,6 +70,9 @@ func parseSearchEntries(raw interface{}) ([]model.SearchEntry, error) {
 			entry := model.SearchEntry{Path: os.ExpandEnv(path)}
 			if name, ok := v["name"].(string); ok {
 				entry.Name = name
+			}
+			if layout, ok := v["layout"].(string); ok {
+				entry.Layout = layout
 			}
 			entries = append(entries, entry)
 		default:

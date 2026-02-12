@@ -65,7 +65,7 @@ func EntryFromSearchEntry(se model.SearchEntry) model.Entry {
 	if label == "" {
 		label = filepath.Base(se.Path)
 	}
-	return model.Entry{Label: label, Path: se.Path}
+	return model.Entry{Label: label, Path: se.Path, Layout: se.Layout}
 }
 
 // BuildEntries creates a list of all searchable entries based on configuration
@@ -91,8 +91,26 @@ func BuildEntries(config model.Config) ([]model.Entry, error) {
 	return allProjects, nil
 }
 
-// StartSession creates or attaches to a tmux session with the given name and path
-func StartSession(name string, path string) error {
+// resolveLayoutPath returns the path to the layout file to apply, or "" if none.
+// Precedence: local .sessionizer.yml > named layout from configDir/layouts/ > none.
+func resolveLayoutPath(sessionPath string, layout string, configDir string) string {
+	localPath := filepath.Join(sessionPath, layoutFileName)
+	if _, err := os.Stat(localPath); err == nil {
+		return localPath
+	}
+	if layout != "" {
+		namedPath := filepath.Join(configDir, "layouts", layout+".yml")
+		if _, err := os.Stat(namedPath); err == nil {
+			return namedPath
+		}
+	}
+	return ""
+}
+
+// StartSession creates or attaches to a tmux session with the given name and path.
+// If layout is non-empty and no local .sessionizer.yml exists, it resolves a named
+// layout file from configDir/layouts/<layout>.yml.
+func StartSession(name string, path string, layout string, configDir string) error {
 	server := new(tmux.Server)
 
 	var session tmux.Session
@@ -115,13 +133,12 @@ func StartSession(name string, path string) error {
 	}
 
 	if freshlyCreated {
-		layoutPath := filepath.Join(path, layoutFileName)
-		if _, err := os.Stat(layoutPath); err == nil {
-			layout, err := tmuxp.ReadLayoutFromFile(layoutPath)
+		if layoutPath := resolveLayoutPath(path, layout, configDir); layoutPath != "" {
+			l, err := tmuxp.ReadLayoutFromFile(layoutPath)
 			if err != nil {
 				return err
 			}
-			err = ApplyLayout(server, session, *layout)
+			err = ApplyLayout(server, session, *l)
 			if err != nil {
 				return err
 			}
