@@ -4,9 +4,7 @@ Yet another tmux sessionizer
 
 ## Config
 
-Requires a config file at `$XDG_CONFIG_HOME/sessionizer/config.toml` (defaulting to `$HOME/.config/sessionizer/config.toml`
-
-For example:
+Needs a config file at `$XDG_CONFIG_HOME/sessionizer/config.toml` (or `$HOME/.config/sessionizer/config.toml`):
 
 ```
 [base]
@@ -15,6 +13,7 @@ ignore = ["node_modules"]   # optional
 [default]
 name = "default"            # optional
 path = "$HOME/Downloads"    # required
+layout_path = "$HOME/.config/sessionizer/default.yml"  # optional, layout for the default session
 
 [search]
 directories = [
@@ -27,11 +26,21 @@ entries = [
 ]
 ```
 
+## Layouts
+
+New sessions can start with a preset window/pane layout ([tmuxp](https://tmuxp.git-pull.com/) format). sessionizer picks the first it finds:
+
+1. `.sessionizer.yml` in the session directory
+2. `default.layout_path` (for the default session)
+3. `layouts/<name>.yml` next to your config (via `layout` on a `search.entries` object)
+
+No layout found? You get a plain single window.
+
 ## Usage
 
 **Open a fuzzy search**
 
-Lists all projects (directories with a `.git` sub-directory), and, upon selection starting or switching to that tmux session. It always offers the `default` session.
+Fuzzy-find a project (any directory with a `.git`) and start or switch to its tmux session. The `default` session is always offered.
 
 ```
 sessionizer search
@@ -39,7 +48,7 @@ sessionizer search
 
 **Print selected project path**
 
-Opens the same fuzzy finder but prints the selected path to stdout instead of starting a tmux session. Useful for shell wrappers (e.g. `cd` to project directory). Exits silently if cancelled.
+Same finder, but prints the selected path to stdout instead of starting a session — handy for shell wrappers (e.g. `cd` to it). Silent if cancelled.
 
 ```
 sessionizer search --print-path
@@ -55,7 +64,7 @@ personal/project
 
 **List all detached sessions**
 
-Helpful if you want to list alternative sessions eg. in a tmux status bar
+Handy for listing alternative sessions, e.g. in a tmux status bar.
 
 ```
 sessionizer sessions --detached-only
@@ -93,12 +102,12 @@ sessionizer windows --json
   }
 ]
 ```
-With
+Where:
 
-- `active` meaning that the window is currently selected by a session as it's window
-- `active_clients` counting the number of clients actively viewing that window.
+- `active` — the window is the one currently selected by its session
+- `active_clients` — how many clients are actively viewing it
 
-The distinction here is that a session might be detached. A window would still be `active` but would have one less `active_lients`
+A detached session's window can still be `active`, just with one fewer `active_clients`.
 
 **Start default session**
 
