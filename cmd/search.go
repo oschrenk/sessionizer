@@ -32,7 +32,7 @@ func search(projects []model.Entry) (model.Entry, error) {
 
 func startSession(project model.Entry) {
 	configDir := filepath.Dir(viper.ConfigFileUsed())
-	err := core.StartSession(project.Label, project.Path, project.Layout, configDir)
+	err := core.StartSession(project.Label, project.Path, project.Layout, project.LayoutPath, configDir)
 	if err != nil {
 		panic(err)
 	}
@@ -95,12 +95,13 @@ var searchCmd = &cobra.Command{
 		}
 
 		config := model.Config{
-			DefaultName:    viper.GetString("default.name"),
-			DefaultPath:    os.ExpandEnv(viper.GetString("default.path")),
-			SearchDirs:     mapF(viper.GetStringSlice("search.directories"), os.ExpandEnv),
-			SearchEntries:  searchEntries,
-			Ignore:         viper.GetStringSlice("base.ignore"),
-			RooterPatterns: viper.GetStringSlice("base.rooter_patterns"),
+			DefaultName:       viper.GetString("default.name"),
+			DefaultPath:       os.ExpandEnv(viper.GetString("default.path")),
+			DefaultLayoutPath: viper.GetString("default.layout_path"),
+			SearchDirs:        mapF(viper.GetStringSlice("search.directories"), os.ExpandEnv),
+			SearchEntries:     searchEntries,
+			Ignore:            viper.GetStringSlice("base.ignore"),
+			RooterPatterns:    viper.GetStringSlice("base.rooter_patterns"),
 		}
 
 		// build entries

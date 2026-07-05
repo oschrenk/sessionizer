@@ -23,9 +23,10 @@ var startCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		defaultName := viper.GetString("default.name")
 		defaultPath := os.ExpandEnv(viper.GetString("default.path"))
+		defaultLayoutPath := viper.GetString("default.layout_path")
 
 		configDir := filepath.Dir(viper.ConfigFileUsed())
-		err := core.StartSession(defaultName, defaultPath, "", configDir)
+		err := core.StartSession(defaultName, defaultPath, "", defaultLayoutPath, configDir)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error switching to session: %s", defaultName)
 			os.Exit(1)

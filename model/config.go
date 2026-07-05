@@ -9,10 +9,12 @@ type SearchEntry struct {
 
 // Config holds the application configuration
 type Config struct {
-	DefaultName    string
-	DefaultPath    string
-	SearchDirs     []string
-	SearchEntries  []SearchEntry
-	Ignore         []string
-	RooterPatterns []string
+	DefaultName string
+	DefaultPath string
+	// DefaultLayoutPath is a direct path to a layout file for the default entry
+	DefaultLayoutPath string
+	SearchDirs        []string
+	SearchEntries     []SearchEntry
+	Ignore            []string
+	RooterPatterns    []string
 }

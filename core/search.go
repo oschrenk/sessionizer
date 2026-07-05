@@ -72,7 +72,11 @@ func EntryFromSearchEntry(se model.SearchEntry) model.Entry {
 func BuildEntries(config model.Config) ([]model.Entry, error) {
 	allProjects := []model.Entry{}
 	// TODO this should not allow a session name with `.` or `:`
-	allProjects = append(allProjects, model.Entry{Label: config.DefaultName, Path: config.DefaultPath})
+	allProjects = append(allProjects, model.Entry{
+		Label:      config.DefaultName,
+		Path:       config.DefaultPath,
+		LayoutPath: config.DefaultLayoutPath,
+	})
 
 	// search through directories
 	for _, searchDir := range config.SearchDirs {
@@ -92,11 +96,18 @@ func BuildEntries(config model.Config) ([]model.Entry, error) {
 }
 
 // resolveLayoutPath returns the path to the layout file to apply, or "" if none.
-// Precedence: local .sessionizer.yml > named layout from configDir/layouts/ > none.
-func resolveLayoutPath(sessionPath string, layout string, configDir string) string {
+// Precedence: local .sessionizer.yml > direct layoutPath > named layout from
+// configDir/layouts/ > none.
+func resolveLayoutPath(sessionPath string, layout string, layoutPath string, configDir string) string {
 	localPath := filepath.Join(sessionPath, layoutFileName)
 	if _, err := os.Stat(localPath); err == nil {
 		return localPath
+	}
+	if layoutPath != "" {
+		directPath := tmuxp.ExpandPath(layoutPath)
+		if _, err := os.Stat(directPath); err == nil {
+			return directPath
+		}
 	}
 	if layout != "" {
 		namedPath := filepath.Join(configDir, "layouts", layout+".yml")
@@ -108,9 +119,9 @@ func resolveLayoutPath(sessionPath string, layout string, configDir string) stri
 }
 
 // StartSession creates or attaches to a tmux session with the given name and path.
-// If layout is non-empty and no local .sessionizer.yml exists, it resolves a named
-// layout file from configDir/layouts/<layout>.yml.
-func StartSession(name string, path string, layout string, configDir string) error {
+// If no local .sessionizer.yml exists, it resolves a layout from the direct
+// layoutPath, or from a named layout file at configDir/layouts/<layout>.yml.
+func StartSession(name string, path string, layout string, layoutPath string, configDir string) error {
 	server := new(tmux.Server)
 
 	var session tmux.Session
@@ -133,8 +144,8 @@ func StartSession(name string, path string, layout string, configDir string) err
 	}
 
 	if freshlyCreated {
-		if layoutPath := resolveLayoutPath(path, layout, configDir); layoutPath != "" {
-			l, err := tmuxp.ReadLayoutFromFile(layoutPath)
+		if resolvedPath := resolveLayoutPath(path, layout, layoutPath, configDir); resolvedPath != "" {
+			l, err := tmuxp.ReadLayoutFromFile(resolvedPath)
 			if err != nil {
 				return err
 			}

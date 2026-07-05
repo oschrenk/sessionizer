@@ -8,8 +8,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// expandPath expands ~ to home directory and environment variables
-func expandPath(path string) string {
+// ExpandPath expands ~ to home directory and environment variables
+func ExpandPath(path string) string {
 	if strings.HasPrefix(path, "~/") {
 		home, err := os.UserHomeDir()
 		if err == nil {
@@ -85,12 +85,12 @@ func ReadLayoutFromFile(filePath string) (*Layout, error) {
 			return nil, fmt.Errorf("window %d must have at least one pane", i)
 		}
 		// Expand ~ and environment variables in window start directory
-		layout.Windows[i].StartDirectory = expandPath(window.StartDirectory)
+		layout.Windows[i].StartDirectory = ExpandPath(window.StartDirectory)
 
 		// Expand ~ and environment variables in pane start directories
 		for j, pane := range window.Panes {
 			if pane.StartDirectory != "" {
-				layout.Windows[i].Panes[j].StartDirectory = expandPath(pane.StartDirectory)
+				layout.Windows[i].Panes[j].StartDirectory = ExpandPath(pane.StartDirectory)
 			}
 		}
 	}
