@@ -22,9 +22,13 @@ var startCmd = &cobra.Command{
 		initConfig()
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		defaultName := viper.GetString("default.name")
-		if strings.TrimSpace(defaultName) == "" {
-			fmt.Fprintln(os.Stderr, "No session name: set default.name in config")
+		// -n overrides default.name from config; one of them is required.
+		name, _ := cmd.Flags().GetString("name")
+		if name == "" {
+			name = viper.GetString("default.name")
+		}
+		if strings.TrimSpace(name) == "" {
+			fmt.Fprintln(os.Stderr, "No session name: pass -n <name> or set default.name in config")
 			os.Exit(1)
 		}
 
@@ -32,14 +36,14 @@ var startCmd = &cobra.Command{
 		defaultLayoutPath := viper.GetString("default.layout_path")
 
 		configDir := filepath.Dir(viper.ConfigFileUsed())
-		err := core.StartSession(defaultName, defaultPath, "", defaultLayoutPath, configDir)
+		err := core.StartSession(name, defaultPath, "", defaultLayoutPath, configDir)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error switching to session: %s", defaultName)
+			fmt.Fprintf(os.Stderr, "Error switching to session: %s", name)
 			os.Exit(1)
 		}
 	},
 }
 
 func init() {
-	// add flags and such here
+	startCmd.Flags().StringP("name", "n", "", "Session name to start (overrides default.name)")
 }

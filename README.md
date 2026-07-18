@@ -109,10 +109,13 @@ Where:
 
 A detached session's window can still be `active`, just with one fewer `active_clients`.
 
-**Start default session**
+**Start a session**
+
+Start or attach to a session. The name comes from `default.name`, or `-n` to override it:
 
 ```
-sessionizer start
+sessionizer start            # uses default.name from config
+sessionizer start -n work    # start/attach a session named "work"
 ```
 
 ## TODO
