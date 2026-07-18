@@ -9,6 +9,7 @@ Needs a config file at `$XDG_CONFIG_HOME/sessionizer/config.toml` (or `$HOME/.co
 ```
 [base]
 ignore = ["node_modules"]   # optional
+socket_name = "primary"     # optional; tmux -L target for all commands (omit for the default server)
 
 [default]
 name = "default"            # optional; omit to disable the default session
@@ -37,6 +38,17 @@ New sessions can start with a preset window/pane layout ([tmuxp](https://tmuxp.g
 No layout found? You get a plain single window.
 
 ## Usage
+
+**Target a specific tmux server**
+
+By default sessionizer talks to the default tmux server. To drive a separate, named server (e.g. one per monitor), pass `--socket-name` / `-s` — it maps to `tmux -L <name>` and applies to every command:
+
+```
+sessionizer sessions --socket-name primary
+sessionizer start --socket-name primary
+```
+
+The socket name is resolved from, in order: the `--socket-name` flag, the `SESSIONIZER_SOCKET_NAME` environment variable, `base.socket_name` in the config, then the default server.
 
 **Open a fuzzy search**
 

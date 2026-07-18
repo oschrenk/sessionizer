@@ -34,23 +34,35 @@ func init() {
 }
 
 // resolveSocketName picks the tmux socket name: the --socket-name flag, else the
-// SESSIONIZER_SOCKET_NAME env var. Empty means the default socket / ambient $TMUX.
-// (base.socket_name config fallback is added in a follow-up commit.)
+// SESSIONIZER_SOCKET_NAME env var, else base.socket_name from config. Empty means
+// the default socket / ambient $TMUX.
 func resolveSocketName(cmd *cobra.Command) string {
 	if s, _ := cmd.Flags().GetString("socket-name"); s != "" {
 		return s
 	}
-	return os.Getenv("SESSIONIZER_SOCKET_NAME")
+	if s := os.Getenv("SESSIONIZER_SOCKET_NAME"); s != "" {
+		return s
+	}
+	// non-fatal config read so base.socket_name applies to every command,
+	// including read-only ones that don't otherwise require a config file.
+	configureViper()
+	_ = viper.ReadInConfig()
+	return viper.GetString("base.socket_name")
 }
 
-func initConfig() {
-	// read config file here
+// configureViper sets the config file name, type, search paths and defaults.
+// Shared by initConfig (fatal read) and resolveSocketName (non-fatal read).
+func configureViper() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
 	viper.AddConfigPath("$XDG_CONFIG_HOME/sessionizer")
 	viper.AddConfigPath("$HOME/.config/sessionizer")
 
 	viper.SetDefault("base.ignore", "")
+}
+
+func initConfig() {
+	configureViper()
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
