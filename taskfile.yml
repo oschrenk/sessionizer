@@ -53,6 +53,12 @@ tasks:
     requires:
       vars: [APP_NAME, RELEASE_DIR]
     deps: [tag]
+    # gh is authenticated via the 1Password shell plugin, which only wraps gh in
+    # an interactive shell. task runs under sh, so fetch the token explicitly.
+    # Falls back to any inherited GH_TOKEN when op is unavailable (e.g. CI).
+    env:
+      GH_TOKEN:
+        sh: op plugin run -- gh auth token 2>/dev/null || echo "$GH_TOKEN"
     cmds:
       - gh release create --generate-notes "$APP_VERSION" {{.RELEASE_DIR}}/{{.APP_NAME}}-*
   sha:
