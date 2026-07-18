@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/oschrenk/sessionizer/core"
 	"github.com/spf13/cobra"
@@ -22,6 +23,11 @@ var startCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		defaultName := viper.GetString("default.name")
+		if strings.TrimSpace(defaultName) == "" {
+			fmt.Fprintln(os.Stderr, "No session name: set default.name in config")
+			os.Exit(1)
+		}
+
 		defaultPath := os.ExpandEnv(viper.GetString("default.path"))
 		defaultLayoutPath := viper.GetString("default.layout_path")
 
