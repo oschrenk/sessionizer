@@ -49,6 +49,13 @@ func run(args []string) (string, string, error) {
 	return shell.Run("tmux", args)
 }
 
+// runInteractive is the interactive twin of run: it hands the real terminal to
+// tmux instead of capturing its output, so an `attach` can take over the
+// terminal. It returns when tmux exits (e.g. when the user detaches).
+func runInteractive(args []string) error {
+	return shell.RunInteractive("tmux", args)
+}
+
 func parseSession(line string) (shallowSession, bool) {
 	result := strings.Split(line, sessionSeparator)
 	if len(result) != 4 {
@@ -521,12 +528,7 @@ func attachSession(sessionName string) error {
 		sessionName,
 	}
 
-	_, _, err := run(args)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return runInteractive(args)
 }
 
 func switchClient(sessionName string) error {
