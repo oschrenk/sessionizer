@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/oschrenk/sessionizer/internal/tmux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -26,6 +27,20 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.PersistentFlags().StringP("socket-name", "s", "", "tmux socket name (tmux -L)")
+	rootCmd.PersistentPreRun = func(cmd *cobra.Command, _ []string) {
+		tmux.SetSocket(resolveSocketName(cmd))
+	}
+}
+
+// resolveSocketName picks the tmux socket name: the --socket-name flag, else the
+// SESSIONIZER_SOCKET_NAME env var. Empty means the default socket / ambient $TMUX.
+// (base.socket_name config fallback is added in a follow-up commit.)
+func resolveSocketName(cmd *cobra.Command) string {
+	if s, _ := cmd.Flags().GetString("socket-name"); s != "" {
+		return s
+	}
+	return os.Getenv("SESSIONIZER_SOCKET_NAME")
 }
 
 func initConfig() {

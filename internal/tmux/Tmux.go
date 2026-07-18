@@ -45,15 +45,31 @@ func normalizeName(name string) string {
 	return strings.ToLower(name)
 }
 
+// socketName is the tmux socket name (tmux -L <name>) prepended to every call.
+// Empty means the default socket / ambient $TMUX.
+var socketName string
+
+// SetSocket sets the tmux socket name used by all subsequent tmux calls.
+func SetSocket(s string) { socketName = s }
+
+// withSocket prepends `-L <name>` when a socket is set, so every tmux
+// invocation targets that server instead of the default/ambient one.
+func withSocket(args []string) []string {
+	if socketName != "" {
+		return append([]string{"-L", socketName}, args...)
+	}
+	return args
+}
+
 func run(args []string) (string, string, error) {
-	return shell.Run("tmux", args)
+	return shell.Run("tmux", withSocket(args))
 }
 
 // runInteractive is the interactive twin of run: it hands the real terminal to
 // tmux instead of capturing its output, so an `attach` can take over the
 // terminal. It returns when tmux exits (e.g. when the user detaches).
 func runInteractive(args []string) error {
-	return shell.RunInteractive("tmux", args)
+	return shell.RunInteractive("tmux", withSocket(args))
 }
 
 func parseSession(line string) (shallowSession, bool) {
