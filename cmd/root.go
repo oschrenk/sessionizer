@@ -36,7 +36,6 @@ func initConfig() {
 	viper.AddConfigPath("$HOME/.config/sessionizer")
 
 	viper.SetDefault("base.ignore", "")
-	viper.SetDefault("default.name", "default")
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {

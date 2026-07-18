@@ -11,7 +11,7 @@ Needs a config file at `$XDG_CONFIG_HOME/sessionizer/config.toml` (or `$HOME/.co
 ignore = ["node_modules"]   # optional
 
 [default]
-name = "default"            # optional
+name = "default"            # optional; omit to disable the default session
 path = "$HOME/Downloads"    # required
 layout_path = "$HOME/.config/sessionizer/default.yml"  # optional, layout for the default session
 
@@ -40,7 +40,7 @@ No layout found? You get a plain single window.
 
 **Open a fuzzy search**
 
-Fuzzy-find a project (any directory with a `.git`) and start or switch to its tmux session. The `default` session is always offered.
+Fuzzy-find a project (any directory with a `.git`) and start or switch to its tmux session. The default session is also offered when `default.name` is set.
 
 ```
 sessionizer search
