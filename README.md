@@ -2,6 +2,72 @@
 
 Yet another tmux sessionizer
 
+## Installation
+
+### nix
+
+```bash
+nix profile install github:oschrenk/sessionizer
+```
+
+Prebuilt binaries come from the `oschrenk` Cachix cache, which the flake offers
+as a substituter.
+
+### home-manager
+
+The flake ships a home-manager module that installs sessionizer and generates
+`~/.config/sessionizer/config.toml` plus the `layouts/` directory next to it, so
+the configuration below is declared in Nix rather than hand-edited.
+
+```nix
+{
+  inputs.sessionizer.url = "github:oschrenk/sessionizer";
+  # avoids pulling in a second tmux build
+  inputs.sessionizer.inputs.nixpkgs.follows = "nixpkgs";
+
+  # in your home-manager configuration:
+  imports = [ inputs.sessionizer.homeModules.sessionizer ];
+
+  programs.sessionizer = {
+    enable = true;
+
+    default = {
+      name = "config";
+      path = "$HOME/.config";
+    };
+
+    search = {
+      directories = [ "$HOME/Projects" ];
+      entries = [
+        "$HOME/.local/share/chezmoi"
+        {
+          path = "$HOME/Obsidian/memex";
+          name = "self/memex";
+          layout = "two-columns";
+        }
+      ];
+    };
+
+    layouts.two-columns.windows = [
+      {
+        layout = "even-horizontal";
+        panes = [ { focus = true; } { focus = false; } ];
+      }
+    ];
+  };
+}
+```
+
+### From source
+
+- installs to `$GOBIN/sessionizer`
+
+```
+git clone git@github.com:oschrenk/sessionizer.git
+cd sessionizer
+task install
+```
+
 ## Config
 
 Needs a config file at `$XDG_CONFIG_HOME/sessionizer/config.toml` (or `$HOME/.config/sessionizer/config.toml`):
