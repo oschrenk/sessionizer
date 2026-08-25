@@ -45,3 +45,35 @@ func TestWithSocket(t *testing.T) {
 		})
 	}
 }
+
+func TestSetBinary(t *testing.T) {
+	// tmuxBin is package-global; reset it after the test.
+	t.Cleanup(func() { tmuxBin = "tmux" })
+
+	tests := []struct {
+		name string
+		set  string
+		want string
+	}{
+		{
+			name: "empty path keeps the default",
+			set:  "",
+			want: "tmux",
+		},
+		{
+			name: "absolute path replaces the default",
+			set:  "/nix/store/abc/bin/tmux",
+			want: "/nix/store/abc/bin/tmux",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmuxBin = "tmux"
+			SetBinary(tt.set)
+			if tmuxBin != tt.want {
+				t.Errorf("SetBinary(%q) = %q, want %q", tt.set, tmuxBin, tt.want)
+			}
+		})
+	}
+}

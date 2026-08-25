@@ -28,30 +28,32 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringP("socket-name", "s", "", "tmux socket name (tmux -L)")
+	rootCmd.PersistentFlags().String("tmux-path", "", "path to the tmux executable")
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, _ []string) {
-		tmux.SetSocket(resolveSocketName(cmd))
+		// non-fatal config read so base.* applies to every command, including
+		// read-only ones that don't otherwise require a config file.
+		configureViper()
+		_ = viper.ReadInConfig()
+
+		tmux.SetSocket(resolve(cmd, "socket-name", "SESSIONIZER_SOCKET_NAME", "base.socket_name"))
+		tmux.SetBinary(resolve(cmd, "tmux-path", "SESSIONIZER_TMUX_PATH", "base.tmux_path"))
 	}
 }
 
-// resolveSocketName picks the tmux socket name: the --socket-name flag, else the
-// SESSIONIZER_SOCKET_NAME env var, else base.socket_name from config. Empty means
-// the default socket / ambient $TMUX.
-func resolveSocketName(cmd *cobra.Command) string {
-	if s, _ := cmd.Flags().GetString("socket-name"); s != "" {
+// resolve picks a setting from, in order: the named flag, the env var, the
+// config key. It expects the config to have been read already.
+func resolve(cmd *cobra.Command, flag string, env string, key string) string {
+	if s, _ := cmd.Flags().GetString(flag); s != "" {
 		return s
 	}
-	if s := os.Getenv("SESSIONIZER_SOCKET_NAME"); s != "" {
+	if s := os.Getenv(env); s != "" {
 		return s
 	}
-	// non-fatal config read so base.socket_name applies to every command,
-	// including read-only ones that don't otherwise require a config file.
-	configureViper()
-	_ = viper.ReadInConfig()
-	return viper.GetString("base.socket_name")
+	return viper.GetString(key)
 }
 
 // configureViper sets the config file name, type, search paths and defaults.
-// Shared by initConfig (fatal read) and resolveSocketName (non-fatal read).
+// Shared by initConfig (fatal read) and the root PersistentPreRun (non-fatal read).
 func configureViper() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
@@ -59,6 +61,7 @@ func configureViper() {
 	viper.AddConfigPath("$HOME/.config/sessionizer")
 
 	viper.SetDefault("base.ignore", "")
+	viper.SetDefault("base.tmux_path", "tmux")
 }
 
 func initConfig() {

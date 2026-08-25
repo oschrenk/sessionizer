@@ -61,15 +61,29 @@ func withSocket(args []string) []string {
 	return args
 }
 
+// tmuxBin is the tmux executable every call goes through. A bare name is
+// resolved through PATH by the shell package; an absolute path (what the nix
+// module configures) is used as-is, which is what makes sessionizer work from
+// launchd, where PATH excludes the nix profile directories.
+var tmuxBin = "tmux"
+
+// SetBinary sets the tmux executable used by all subsequent tmux calls.
+// An empty path leaves the default in place.
+func SetBinary(p string) {
+	if p != "" {
+		tmuxBin = p
+	}
+}
+
 func run(args []string) (string, string, error) {
-	return shell.Run("tmux", withSocket(args))
+	return shell.Run(tmuxBin, withSocket(args))
 }
 
 // runInteractive is the interactive twin of run: it hands the real terminal to
 // tmux instead of capturing its output, so an `attach` can take over the
 // terminal. It returns when tmux exits (e.g. when the user detaches).
 func runInteractive(args []string) error {
-	return shell.RunInteractive("tmux", withSocket(args))
+	return shell.RunInteractive(tmuxBin, withSocket(args))
 }
 
 func parseSession(line string) (shallowSession, bool) {

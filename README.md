@@ -10,6 +10,7 @@ Needs a config file at `$XDG_CONFIG_HOME/sessionizer/config.toml` (or `$HOME/.co
 [base]
 ignore = ["node_modules"]   # optional
 socket_name = "primary"     # optional; tmux -L target for all commands (omit for the default server)
+tmux_path = "tmux"          # optional; path to the tmux executable, resolved through PATH by default
 
 [default]
 name = "default"            # optional; omit to disable the default session
@@ -49,6 +50,10 @@ sessionizer start --socket-name primary
 ```
 
 The socket name is resolved from, in order: the `--socket-name` flag, the `SESSIONIZER_SOCKET_NAME` environment variable, `base.socket_name` in the config, then the default server.
+
+**Point at a specific tmux binary**
+
+sessionizer shells out to `tmux`, resolved through `PATH`. When `PATH` can't be relied on — under launchd, say, whose default excludes the nix profile directories — give it an absolute path with `--tmux-path`, the `SESSIONIZER_TMUX_PATH` environment variable, or `base.tmux_path` in the config, in that order of precedence.
 
 **Open a fuzzy search**
 
