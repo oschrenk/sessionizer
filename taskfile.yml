@@ -1,7 +1,10 @@
 version: '3'
-dotenv: ['VERSION']
 vars:
   APP_NAME: "sessionizer"
+  # ./VERSION holds a bare semver (e.g. 0.13.0); the "v" prefix is added here
+  # and in the flake, so both builds stamp the same string.
+  APP_VERSION:
+    sh: echo "v$(cat VERSION)"
   RELEASE_DIR: "./.release"
   BUILD_TARGET: "./{{.APP_NAME}}"
 tasks:
@@ -21,7 +24,7 @@ tasks:
     requires:
       vars: [BUILD_TARGET]
     cmds:
-      - go build -v -ldflags="-X github.com/oschrenk/sessionizer/cmd.Version=$APP_VERSION" -o "{{.BUILD_TARGET}}"
+      - go build -v -ldflags="-X github.com/oschrenk/sessionizer/cmd.Version={{.APP_VERSION}}" -o "{{.BUILD_TARGET}}"
     silent: true
   test:
     cmds:
@@ -30,7 +33,7 @@ tasks:
   install:
     cmds:
       - go mod tidy
-      - go install -ldflags="-X github.com/oschrenk/sessionizer/cmd.Version=$APP_VERSION"
+      - go install -ldflags="-X github.com/oschrenk/sessionizer/cmd.Version={{.APP_VERSION}}"
     silent: true
   uninstall:
     cmds:
@@ -41,14 +44,14 @@ tasks:
       vars: [APP_NAME, RELEASE_DIR]
     cmds:
       - mkdir -p {{.RELEASE_DIR}}
-      - GOOS=darwin GOARCH=arm64 go build -v -ldflags="-X github.com/oschrenk/sessionizer/cmd.Version=$APP_VERSION" -o {{.RELEASE_DIR}}/{{.APP_NAME}}-darwin-arm64
-      - GOOS=darwin GOARCH=amd64 go build -v -ldflags="-X github.com/oschrenk/sessionizer/cmd.Version=$APP_VERSION" -o {{.RELEASE_DIR}}/{{.APP_NAME}}-darwin-amd64
+      - GOOS=darwin GOARCH=arm64 go build -v -ldflags="-X github.com/oschrenk/sessionizer/cmd.Version={{.APP_VERSION}}" -o {{.RELEASE_DIR}}/{{.APP_NAME}}-darwin-arm64
+      - GOOS=darwin GOARCH=amd64 go build -v -ldflags="-X github.com/oschrenk/sessionizer/cmd.Version={{.APP_VERSION}}" -o {{.RELEASE_DIR}}/{{.APP_NAME}}-darwin-amd64
     deps: [tidy]
   tag:
     deps: [artifacts]
     cmds:
-      - git tag "$APP_VERSION"
-      - git push origin "$APP_VERSION"
+      - git tag "{{.APP_VERSION}}"
+      - git push origin "{{.APP_VERSION}}"
   release:
     requires:
       vars: [APP_NAME, RELEASE_DIR]
@@ -60,7 +63,7 @@ tasks:
       GH_TOKEN:
         sh: op plugin run -- gh auth token 2>/dev/null || echo "$GH_TOKEN"
     cmds:
-      - gh release create --generate-notes "$APP_VERSION" {{.RELEASE_DIR}}/{{.APP_NAME}}-*
+      - gh release create --generate-notes "{{.APP_VERSION}}" {{.RELEASE_DIR}}/{{.APP_NAME}}-*
   sha:
     requires:
       vars: [APP_NAME, RELEASE_DIR]
