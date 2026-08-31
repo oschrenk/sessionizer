@@ -81,12 +81,13 @@ func initConfig() {
 }
 
 // legacyKeys are the `[default]` keys that described the startup session before
-// the section was renamed to `[startup]`.
+// `[default]` was re-taken for the global layout fallback.
 var legacyKeys = []string{"default.name", "default.path", "default.layout_path"}
 
 // assertNoLegacyKeys refuses to run against a config that still describes the
 // startup session under `[default]`. Ignoring those keys would silently drop the
-// startup entry, so the failure is made loud instead.
+// startup entry, and `default.layout_path` now means nothing at all, so the
+// failure is made loud instead.
 func assertNoLegacyKeys() {
 	found := []string{}
 	for _, key := range legacyKeys {
@@ -101,5 +102,6 @@ func assertNoLegacyKeys() {
 	fmt.Fprintf(os.Stderr, "Obsolete config key(s): %s\n", strings.Join(found, ", "))
 	fmt.Fprintln(os.Stderr, "The startup session moved from [default] to [startup]:")
 	fmt.Fprintln(os.Stderr, "  rename the section, and layout_path stays layout_path.")
+	fmt.Fprintln(os.Stderr, "[default] now holds `layout`, a named layout applied to every entry.")
 	os.Exit(1)
 }

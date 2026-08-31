@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/oschrenk/sessionizer/model"
 )
 
 func TestResolveLayoutPath(t *testing.T) {
@@ -92,4 +94,129 @@ func TestResolveLayoutPath(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBuildEntriesDefaultLayout(t *testing.T) {
+	// a search directory holding one project, marked by a .git rooter
+	searchDir := t.TempDir()
+	projectDir := filepath.Join(searchDir, "walked")
+	if err := os.MkdirAll(filepath.Join(projectDir, ".git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	base := func() model.Config {
+		return model.Config{
+			StartupName:    "startup",
+			StartupPath:    t.TempDir(),
+			DefaultLayout:  "global",
+			SearchDirs:     []string{searchDir},
+			RooterPatterns: []string{".git"},
+			SearchEntries: []model.SearchEntry{
+				{Path: "/tmp/bare", Name: "bare"},
+				{Path: "/tmp/own", Name: "own", Layout: "entry-own"},
+			},
+		}
+	}
+
+	// layoutOf finds the entry by label and reports its resolved layout keys
+	layoutOf := func(t *testing.T, entries []model.Entry, label string) model.Entry {
+		t.Helper()
+		for _, e := range entries {
+			if e.Label == label {
+				return e
+			}
+		}
+		t.Fatalf("no entry labelled %q in %v", label, entries)
+		return model.Entry{}
+	}
+
+	t.Run("default layout reaches walked, manual and startup entries", func(t *testing.T) {
+		entries, err := BuildEntries(base())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, label := range []string{"startup", "walked", "bare"} {
+			if got := layoutOf(t, entries, label).Layout; got != "global" {
+				t.Errorf("%s: Layout = %q, want %q", label, got, "global")
+			}
+		}
+	})
+
+	t.Run("entry layout wins over default layout", func(t *testing.T) {
+		entries, err := BuildEntries(base())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if got := layoutOf(t, entries, "own").Layout; got != "entry-own" {
+			t.Errorf("Layout = %q, want %q", got, "entry-own")
+		}
+	})
+
+	t.Run("startup layout wins over default layout", func(t *testing.T) {
+		config := base()
+		config.StartupLayout = "startup-own"
+
+		entries, err := BuildEntries(config)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if got := layoutOf(t, entries, "startup").Layout; got != "startup-own" {
+			t.Errorf("Layout = %q, want %q", got, "startup-own")
+		}
+	})
+
+	t.Run("startup layout path wins over default layout", func(t *testing.T) {
+		config := base()
+		config.StartupLayoutPath = "/tmp/startup.yml"
+
+		entries, err := BuildEntries(config)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// the default must not be seeded alongside a layout path, or it would
+		// resolve as a fallback the startup section never asked for
+		startup := layoutOf(t, entries, "startup")
+		if startup.Layout != "" {
+			t.Errorf("Layout = %q, want empty", startup.Layout)
+		}
+		if startup.LayoutPath != "/tmp/startup.yml" {
+			t.Errorf("LayoutPath = %q, want %q", startup.LayoutPath, "/tmp/startup.yml")
+		}
+	})
+
+	t.Run("no default layout leaves entries untouched", func(t *testing.T) {
+		config := base()
+		config.DefaultLayout = ""
+
+		entries, err := BuildEntries(config)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, label := range []string{"startup", "walked", "bare"} {
+			if got := layoutOf(t, entries, label).Layout; got != "" {
+				t.Errorf("%s: Layout = %q, want empty", label, got)
+			}
+		}
+	})
+
+	t.Run("no startup name drops the startup entry", func(t *testing.T) {
+		config := base()
+		config.StartupName = ""
+
+		entries, err := BuildEntries(config)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, e := range entries {
+			if e.Label == "startup" {
+				t.Fatal("startup entry offered without a startup name")
+			}
+		}
+	})
 }

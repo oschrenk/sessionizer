@@ -11,10 +11,16 @@ type SearchEntry struct {
 type Config struct {
 	StartupName string
 	StartupPath string
+	// StartupLayout names a layout for the startup entry, resolved from
+	// configDir/layouts/<name>.yml
+	StartupLayout string
 	// StartupLayoutPath is a direct path to a layout file for the startup entry
 	StartupLayoutPath string
-	SearchDirs        []string
-	SearchEntries     []SearchEntry
-	Ignore            []string
-	RooterPatterns    []string
+	// DefaultLayout names a layout applied to every entry that carries none of
+	// its own, resolved from configDir/layouts/<name>.yml
+	DefaultLayout  string
+	SearchDirs     []string
+	SearchEntries  []SearchEntry
+	Ignore         []string
+	RooterPatterns []string
 }

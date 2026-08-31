@@ -9,6 +9,7 @@
 #       name = "config";
 #       path = "$HOME/.config";
 #     };
+#     default.layout = "two-columns";
 #     search = {
 #       directories = [ "$HOME/Projects" ];
 #       entries = [
@@ -110,9 +111,16 @@ let
       # core.BuildEntries only offers the startup entry when the name is set,
       # so an unset name omits the section entirely.
       startup = withoutNull {
-        inherit (cfg.startup) name path;
+        inherit (cfg.startup)
+          name
+          path
+          layout
+          ;
         layout_path = cfg.startup.layoutPath;
       };
+    }
+    // lib.optionalAttrs (cfg.default.layout != null) {
+      default.layout = cfg.default.layout;
     };
 
   layoutFiles = lib.mapAttrs' (
@@ -206,13 +214,38 @@ in
         '';
       };
 
+      layout = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        example = "two-columns";
+        description = ''
+          Layout applied to the startup session, named after an attribute of
+          {option}`layouts`. Null falls back to {option}`default.layout`.
+        '';
+      };
+
       layoutPath = mkOption {
         type = types.nullOr types.str;
         default = null;
         example = "$HOME/.config/sessionizer/startup.yml";
         description = ''
           Layout file applied to the startup session, given as a direct path
-          rather than a name from {option}`layouts`.
+          rather than a name from {option}`layouts`. Wins over
+          {option}`startup.layout`.
+        '';
+      };
+    };
+
+    default = {
+      layout = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        example = "two-columns";
+        description = ''
+          Layout applied to every entry that names none of its own, including
+          the projects found by walking {option}`search.directories`. Named
+          after an attribute of {option}`layouts`. A `.sessionizer.yml` in the
+          project directory, and a per-entry `layout`, both win over it.
         '';
       };
     };
@@ -260,8 +293,9 @@ in
       '';
       description = ''
         Named layouts in tmuxp format, written to
-        `$XDG_CONFIG_HOME/sessionizer/layouts/<name>.yml` and referenced by the
-        `layout` key of a {option}`search.entries` object.
+        `$XDG_CONFIG_HOME/sessionizer/layouts/<name>.yml` and referenced by
+        {option}`default.layout`, {option}`startup.layout`, and the `layout` key
+        of a {option}`search.entries` object.
       '';
     };
   };

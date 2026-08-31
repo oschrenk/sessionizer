@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/oschrenk/sessionizer/core"
+	"github.com/oschrenk/sessionizer/model"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -32,11 +33,18 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		startupPath := os.ExpandEnv(viper.GetString("startup.path"))
-		startupLayoutPath := viper.GetString("startup.layout_path")
+		// built through StartupEntry so `start` inherits default.layout on the
+		// same terms as the finder does
+		entry := core.StartupEntry(model.Config{
+			StartupName:       name,
+			StartupPath:       os.ExpandEnv(viper.GetString("startup.path")),
+			StartupLayout:     viper.GetString("startup.layout"),
+			StartupLayoutPath: viper.GetString("startup.layout_path"),
+			DefaultLayout:     viper.GetString("default.layout"),
+		})
 
 		configDir := filepath.Dir(viper.ConfigFileUsed())
-		err := core.StartSession(name, startupPath, "", startupLayoutPath, configDir)
+		err := core.StartSession(entry.Label, entry.Path, entry.Layout, entry.LayoutPath, configDir)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error switching to session: %s", name)
 			os.Exit(1)

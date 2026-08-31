@@ -81,7 +81,11 @@ tmux_path = "tmux"          # optional; path to the tmux executable, resolved th
 [startup]
 name = "default"            # optional; omit to disable the startup session
 path = "$HOME/Downloads"    # required
-layout_path = "$HOME/.config/sessionizer/startup.yml"  # optional, layout for the startup session
+layout = "two-columns"      # optional; named layout for the startup session
+layout_path = "$HOME/.config/sessionizer/startup.yml"  # optional; direct path, wins over layout
+
+[default]
+layout = "two-columns"      # optional; named layout applied to every entry
 
 [search]
 directories = [
@@ -99,10 +103,13 @@ entries = [
 New sessions can start with a preset window/pane layout ([tmuxp](https://tmuxp.git-pull.com/) format). sessionizer picks the first it finds:
 
 1. `.sessionizer.yml` in the session directory
-2. `startup.layout_path` (for the startup session)
-3. `layouts/<name>.yml` next to your config (via `layout` on a `search.entries` object)
+2. the entry's own layout — `layout` / `layout_path` on a `search.entries` object, or on `[startup]`
+3. `default.layout`, applied to every entry that names none of its own
+4. no layout — a plain single window
 
-No layout found? You get a plain single window.
+Named layouts (`layout`, `default.layout`) resolve to `layouts/<name>.yml` next to your config; `layout_path` is a direct path to a file anywhere.
+
+`default.layout` is how you give *every* project the same starting layout, including the ones found by walking `search.directories`. Drop a `.sessionizer.yml` into a project to override it there.
 
 ## Usage
 

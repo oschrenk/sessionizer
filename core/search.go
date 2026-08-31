@@ -68,17 +68,33 @@ func EntryFromSearchEntry(se model.SearchEntry) model.Entry {
 	return model.Entry{Label: label, Path: se.Path, Layout: se.Layout}
 }
 
+// applyDefaultLayout seeds the global default layout onto an entry that names
+// no layout of its own. A local .sessionizer.yml still wins, in resolveLayoutPath.
+func applyDefaultLayout(entry model.Entry, defaultLayout string) model.Entry {
+	if entry.Layout == "" && entry.LayoutPath == "" {
+		entry.Layout = defaultLayout
+	}
+	return entry
+}
+
+// StartupEntry builds the entry for the startup session, with the global
+// default layout applied when the startup section names none itself.
+func StartupEntry(config model.Config) model.Entry {
+	return applyDefaultLayout(model.Entry{
+		Label:      config.StartupName,
+		Path:       config.StartupPath,
+		Layout:     config.StartupLayout,
+		LayoutPath: config.StartupLayoutPath,
+	}, config.DefaultLayout)
+}
+
 // BuildEntries creates a list of all searchable entries based on configuration
 func BuildEntries(config model.Config) ([]model.Entry, error) {
 	allProjects := []model.Entry{}
 	// TODO this should not allow a session name with `.` or `:`
 	// only offer the startup entry when a startup name is configured
 	if strings.TrimSpace(config.StartupName) != "" {
-		allProjects = append(allProjects, model.Entry{
-			Label:      config.StartupName,
-			Path:       config.StartupPath,
-			LayoutPath: config.StartupLayoutPath,
-		})
+		allProjects = append(allProjects, StartupEntry(config))
 	}
 
 	// search through directories
@@ -95,12 +111,19 @@ func BuildEntries(config model.Config) ([]model.Entry, error) {
 		allProjects = append(allProjects, EntryFromSearchEntry(entryPath))
 	}
 
+	// the global default is the last level of the layout chain: it reaches every
+	// entry that named neither a layout nor a layout path of its own
+	for i := range allProjects {
+		allProjects[i] = applyDefaultLayout(allProjects[i], config.DefaultLayout)
+	}
+
 	return allProjects, nil
 }
 
 // resolveLayoutPath returns the path to the layout file to apply, or "" if none.
 // Precedence: local .sessionizer.yml > direct layoutPath > named layout from
-// configDir/layouts/ > none.
+// configDir/layouts/ > none. The named layout may be the entry's own or the
+// global default seeded by applyDefaultLayout; both arrive here the same way.
 func resolveLayoutPath(sessionPath string, layout string, layoutPath string, configDir string) string {
 	localPath := filepath.Join(sessionPath, layoutFileName)
 	if _, err := os.Stat(localPath); err == nil {
