@@ -5,7 +5,7 @@
 #
 #   programs.sessionizer = {
 #     enable = true;
-#     default = {
+#     startup = {
 #       name = "config";
 #       path = "$HOME/.config";
 #     };
@@ -106,12 +106,12 @@ let
         entries = map withoutNull cfg.search.entries;
       };
     }
-    // lib.optionalAttrs (cfg.default.name != null) {
-      # core.BuildEntries only offers the default entry when the name is set,
+    // lib.optionalAttrs (cfg.startup.name != null) {
+      # core.BuildEntries only offers the startup entry when the name is set,
       # so an unset name omits the section entirely.
-      default = withoutNull {
-        inherit (cfg.default) name path;
-        layout_path = cfg.default.layoutPath;
+      startup = withoutNull {
+        inherit (cfg.startup) name path;
+        layout_path = cfg.startup.layoutPath;
       };
     };
 
@@ -185,14 +185,14 @@ in
       };
     };
 
-    default = {
+    startup = {
       name = mkOption {
         type = types.nullOr types.str;
         default = null;
         example = "config";
         description = ''
           Name of the session `sessionizer start` opens, also offered first in
-          the finder. Null drops the default entry altogether.
+          the finder. Null drops the startup entry altogether.
         '';
       };
 
@@ -201,17 +201,17 @@ in
         default = null;
         example = "$HOME/.config";
         description = ''
-          Directory the default session opens in. Required when
-          {option}`default.name` is set. Expanded through `os.ExpandEnv`.
+          Directory the startup session opens in. Required when
+          {option}`startup.name` is set. Expanded through `os.ExpandEnv`.
         '';
       };
 
       layoutPath = mkOption {
         type = types.nullOr types.str;
         default = null;
-        example = "$HOME/.config/sessionizer/default.yml";
+        example = "$HOME/.config/sessionizer/startup.yml";
         description = ''
-          Layout file applied to the default session, given as a direct path
+          Layout file applied to the startup session, given as a direct path
           rather than a name from {option}`layouts`.
         '';
       };
@@ -269,8 +269,8 @@ in
   config = mkIf cfg.enable {
     assertions = [
       {
-        assertion = cfg.default.name == null || cfg.default.path != null;
-        message = "programs.sessionizer: `default.path` is required when `default.name` is set.";
+        assertion = cfg.startup.name == null || cfg.startup.path != null;
+        message = "programs.sessionizer: `startup.path` is required when `startup.name` is set.";
       }
     ];
 

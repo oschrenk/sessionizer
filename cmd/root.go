@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/oschrenk/sessionizer/internal/tmux"
 	"github.com/spf13/cobra"
@@ -75,4 +76,30 @@ func initConfig() {
 		}
 		os.Exit(1)
 	}
+
+	assertNoLegacyKeys()
+}
+
+// legacyKeys are the `[default]` keys that described the startup session before
+// the section was renamed to `[startup]`.
+var legacyKeys = []string{"default.name", "default.path", "default.layout_path"}
+
+// assertNoLegacyKeys refuses to run against a config that still describes the
+// startup session under `[default]`. Ignoring those keys would silently drop the
+// startup entry, so the failure is made loud instead.
+func assertNoLegacyKeys() {
+	found := []string{}
+	for _, key := range legacyKeys {
+		if viper.IsSet(key) {
+			found = append(found, key)
+		}
+	}
+	if len(found) == 0 {
+		return
+	}
+
+	fmt.Fprintf(os.Stderr, "Obsolete config key(s): %s\n", strings.Join(found, ", "))
+	fmt.Fprintln(os.Stderr, "The startup session moved from [default] to [startup]:")
+	fmt.Fprintln(os.Stderr, "  rename the section, and layout_path stays layout_path.")
+	os.Exit(1)
 }

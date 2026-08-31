@@ -95,9 +95,9 @@ var searchCmd = &cobra.Command{
 		}
 
 		config := model.Config{
-			DefaultName:       viper.GetString("default.name"),
-			DefaultPath:       os.ExpandEnv(viper.GetString("default.path")),
-			DefaultLayoutPath: viper.GetString("default.layout_path"),
+			StartupName:       viper.GetString("startup.name"),
+			StartupPath:       os.ExpandEnv(viper.GetString("startup.path")),
+			StartupLayoutPath: viper.GetString("startup.layout_path"),
 			SearchDirs:        mapF(viper.GetStringSlice("search.directories"), os.ExpandEnv),
 			SearchEntries:     searchEntries,
 			Ignore:            viper.GetStringSlice("base.ignore"),

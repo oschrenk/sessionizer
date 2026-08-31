@@ -78,10 +78,10 @@ ignore = ["node_modules"]   # optional
 socket_name = "primary"     # optional; tmux -L target for all commands (omit for the default server)
 tmux_path = "tmux"          # optional; path to the tmux executable, resolved through PATH by default
 
-[default]
-name = "default"            # optional; omit to disable the default session
+[startup]
+name = "default"            # optional; omit to disable the startup session
 path = "$HOME/Downloads"    # required
-layout_path = "$HOME/.config/sessionizer/default.yml"  # optional, layout for the default session
+layout_path = "$HOME/.config/sessionizer/startup.yml"  # optional, layout for the startup session
 
 [search]
 directories = [
@@ -99,7 +99,7 @@ entries = [
 New sessions can start with a preset window/pane layout ([tmuxp](https://tmuxp.git-pull.com/) format). sessionizer picks the first it finds:
 
 1. `.sessionizer.yml` in the session directory
-2. `default.layout_path` (for the default session)
+2. `startup.layout_path` (for the startup session)
 3. `layouts/<name>.yml` next to your config (via `layout` on a `search.entries` object)
 
 No layout found? You get a plain single window.
@@ -123,7 +123,7 @@ sessionizer shells out to `tmux`, resolved through `PATH`. When `PATH` can't be 
 
 **Open a fuzzy search**
 
-Fuzzy-find a project (any directory with a `.git`) and start or switch to its tmux session. The default session is also offered when `default.name` is set.
+Fuzzy-find a project (any directory with a `.git`) and start or switch to its tmux session. The startup session is also offered when `startup.name` is set.
 
 ```
 sessionizer search
@@ -194,10 +194,10 @@ A detached session's window can still be `active`, just with one fewer `active_c
 
 **Start a session**
 
-Start or attach to a session. The name comes from `default.name`, or `-n` to override it:
+Start or attach to a session. The name comes from `startup.name`, or `-n` to override it:
 
 ```
-sessionizer start            # uses default.name from config
+sessionizer start            # uses startup.name from config
 sessionizer start -n work    # start/attach a session named "work"
 ```
 

@@ -17,26 +17,26 @@ func init() {
 
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "Start tmux with default session",
+	Short: "Start tmux with the startup session",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		initConfig()
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		// -n overrides default.name from config; one of them is required.
+		// -n overrides startup.name from config; one of them is required.
 		name, _ := cmd.Flags().GetString("name")
 		if name == "" {
-			name = viper.GetString("default.name")
+			name = viper.GetString("startup.name")
 		}
 		if strings.TrimSpace(name) == "" {
-			fmt.Fprintln(os.Stderr, "No session name: pass -n <name> or set default.name in config")
+			fmt.Fprintln(os.Stderr, "No session name: pass -n <name> or set startup.name in config")
 			os.Exit(1)
 		}
 
-		defaultPath := os.ExpandEnv(viper.GetString("default.path"))
-		defaultLayoutPath := viper.GetString("default.layout_path")
+		startupPath := os.ExpandEnv(viper.GetString("startup.path"))
+		startupLayoutPath := viper.GetString("startup.layout_path")
 
 		configDir := filepath.Dir(viper.ConfigFileUsed())
-		err := core.StartSession(name, defaultPath, "", defaultLayoutPath, configDir)
+		err := core.StartSession(name, startupPath, "", startupLayoutPath, configDir)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error switching to session: %s", name)
 			os.Exit(1)
@@ -45,5 +45,5 @@ var startCmd = &cobra.Command{
 }
 
 func init() {
-	startCmd.Flags().StringP("name", "n", "", "Session name to start (overrides default.name)")
+	startCmd.Flags().StringP("name", "n", "", "Session name to start (overrides startup.name)")
 }

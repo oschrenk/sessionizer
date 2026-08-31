@@ -72,12 +72,12 @@ func EntryFromSearchEntry(se model.SearchEntry) model.Entry {
 func BuildEntries(config model.Config) ([]model.Entry, error) {
 	allProjects := []model.Entry{}
 	// TODO this should not allow a session name with `.` or `:`
-	// only offer the default entry when a default name is configured
-	if strings.TrimSpace(config.DefaultName) != "" {
+	// only offer the startup entry when a startup name is configured
+	if strings.TrimSpace(config.StartupName) != "" {
 		allProjects = append(allProjects, model.Entry{
-			Label:      config.DefaultName,
-			Path:       config.DefaultPath,
-			LayoutPath: config.DefaultLayoutPath,
+			Label:      config.StartupName,
+			Path:       config.StartupPath,
+			LayoutPath: config.StartupLayoutPath,
 		})
 	}
 
