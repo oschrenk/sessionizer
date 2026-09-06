@@ -88,13 +88,55 @@ func StartupEntry(config model.Config) model.Entry {
 	}, config.DefaultLayout)
 }
 
+// entry sources, ordered from most to least explicit. A path reachable from
+// more than one source keeps the entry of the lowest-numbered one.
+const (
+	sourceStartup = iota
+	sourceManual
+	sourceWalked
+)
+
+// sourcedEntry pairs an entry with the source that produced it, so duplicates
+// can be resolved before the source is forgotten.
+type sourcedEntry struct {
+	entry  model.Entry
+	source int
+}
+
+// dedupe collapses entries that name the same path. The entry from the most
+// explicit source wins, and it takes the position of the first mention of that
+// path, so the order of the list does not depend on which source won.
+func dedupe(sourced []sourcedEntry) []model.Entry {
+	kept := []sourcedEntry{}
+	positions := map[string]int{}
+
+	for _, candidate := range sourced {
+		key := filepath.Clean(candidate.entry.Path)
+		position, seen := positions[key]
+		if !seen {
+			positions[key] = len(kept)
+			kept = append(kept, candidate)
+			continue
+		}
+		if candidate.source < kept[position].source {
+			kept[position] = candidate
+		}
+	}
+
+	entries := make([]model.Entry, len(kept))
+	for i, k := range kept {
+		entries[i] = k.entry
+	}
+	return entries
+}
+
 // BuildEntries creates a list of all searchable entries based on configuration
 func BuildEntries(config model.Config) ([]model.Entry, error) {
-	allProjects := []model.Entry{}
+	sourced := []sourcedEntry{}
 	// TODO this should not allow a session name with `.` or `:`
 	// only offer the startup entry when a startup name is configured
 	if strings.TrimSpace(config.StartupName) != "" {
-		allProjects = append(allProjects, StartupEntry(config))
+		sourced = append(sourced, sourcedEntry{StartupEntry(config), sourceStartup})
 	}
 
 	// search through directories
@@ -103,13 +145,19 @@ func BuildEntries(config model.Config) ([]model.Entry, error) {
 		if err != nil {
 			return nil, err
 		}
-		allProjects = append(allProjects, dirProjects...)
+		for _, dirProject := range dirProjects {
+			sourced = append(sourced, sourcedEntry{dirProject, sourceWalked})
+		}
 	}
 
 	// add specific entries
 	for _, entryPath := range config.SearchEntries {
-		allProjects = append(allProjects, EntryFromSearchEntry(entryPath))
+		sourced = append(sourced, sourcedEntry{EntryFromSearchEntry(entryPath), sourceManual})
 	}
+
+	// one path, one entry: the startup section and a manual entry both outrank a
+	// directory found by walking, which is where the same project shows up twice
+	allProjects := dedupe(sourced)
 
 	// the global default is the last level of the layout chain: it reaches every
 	// entry that named neither a layout nor a layout path of its own

@@ -220,3 +220,101 @@ func TestBuildEntriesDefaultLayout(t *testing.T) {
 		}
 	})
 }
+
+func TestBuildEntriesDeduplicates(t *testing.T) {
+	searchDir := t.TempDir()
+	project := filepath.Join(searchDir, "ops", "dotfiles")
+	if err := os.MkdirAll(filepath.Join(project, ".git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	base := model.Config{
+		SearchDirs:     []string{searchDir},
+		RooterPatterns: []string{".git"},
+	}
+
+	t.Run("startup wins over the walked directory", func(t *testing.T) {
+		config := base
+		config.StartupName = "dotfiles"
+		config.StartupPath = project
+
+		entries, err := BuildEntries(config)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(entries) != 1 {
+			t.Fatalf("expected 1 entry, got %d: %v", len(entries), entries)
+		}
+		if entries[0].Label != "dotfiles" {
+			t.Errorf("expected label %q, got %q", "dotfiles", entries[0].Label)
+		}
+	})
+
+	t.Run("a manual entry wins over the walked directory", func(t *testing.T) {
+		config := base
+		config.SearchEntries = []model.SearchEntry{{Path: project, Name: "config/dotfiles"}}
+
+		entries, err := BuildEntries(config)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(entries) != 1 {
+			t.Fatalf("expected 1 entry, got %d: %v", len(entries), entries)
+		}
+		if entries[0].Label != "config/dotfiles" {
+			t.Errorf("expected label %q, got %q", "config/dotfiles", entries[0].Label)
+		}
+	})
+
+	t.Run("startup wins over a manual entry", func(t *testing.T) {
+		config := base
+		config.SearchDirs = nil
+		config.StartupName = "dotfiles"
+		config.StartupPath = project
+		config.SearchEntries = []model.SearchEntry{{Path: project, Name: "config/dotfiles"}}
+
+		entries, err := BuildEntries(config)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(entries) != 1 {
+			t.Fatalf("expected 1 entry, got %d: %v", len(entries), entries)
+		}
+		if entries[0].Label != "dotfiles" {
+			t.Errorf("expected label %q, got %q", "dotfiles", entries[0].Label)
+		}
+	})
+
+	t.Run("a trailing slash is still the same path", func(t *testing.T) {
+		config := base
+		config.StartupName = "dotfiles"
+		config.StartupPath = project + "/"
+
+		entries, err := BuildEntries(config)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(entries) != 1 {
+			t.Fatalf("expected 1 entry, got %d: %v", len(entries), entries)
+		}
+	})
+
+	t.Run("distinct paths are all kept", func(t *testing.T) {
+		otherDir := t.TempDir()
+		other := filepath.Join(otherDir, "tools", "sessionizer")
+		if err := os.MkdirAll(filepath.Join(other, ".git"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		config := base
+		config.SearchDirs = []string{searchDir, otherDir}
+		config.SearchEntries = []model.SearchEntry{{Path: t.TempDir()}}
+
+		entries, err := BuildEntries(config)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(entries) != 3 {
+			t.Fatalf("expected 3 entries, got %d: %v", len(entries), entries)
+		}
+	})
+}

@@ -111,6 +111,12 @@ Named layouts (`layout`, `default.layout`) resolve to `layouts/<name>.yml` next 
 
 `default.layout` is how you give *every* project the same starting layout, including the ones found by walking `search.directories`. Drop a `.sessionizer.yml` into a project to override it there.
 
+## Duplicate Entries
+
+A directory can be reachable more than one way, as a project under a `search.directories` root that is also your `startup.path`, or as one you also listed in `search.entries`.
+Either way it is offered once.
+The entry that survives is the one from the most explicit source, `[startup]` first, then `search.entries`, then the directory walk, so the name you chose is the name you see.
+
 ## Usage
 
 **Target a specific tmux server**
