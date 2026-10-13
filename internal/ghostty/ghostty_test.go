@@ -55,7 +55,8 @@ func TestBuildScript(t *testing.T) {
 	}
 
 	for _, want := range []string{
-		"set w to new window with configuration cfg with title (item 3 of argv)",
+		"set found to every window whose name is (item 1 of argv)",
+		"set w to new window with configuration cfg with title (item 1 of argv)",
 		"set t0_1 to split t0_0 direction right with configuration cfg",
 		"set t0_3 to split t0_2 direction down with configuration cfg",
 		"set tb to new tab in w with configuration cfg",

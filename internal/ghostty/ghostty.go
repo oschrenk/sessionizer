@@ -11,7 +11,9 @@ import (
 )
 
 // NewWindow opens a Ghostty window titled title, with one tab per layout window
-// and one split per pane. `with title` needs the patched Ghostty fork.
+// and one split per pane. When a window with that title is open already, it
+// brings that window to the front instead. `with title` needs the patched
+// Ghostty fork, which also makes the title the one thing a shell cannot change.
 func NewWindow(path string, title string, layout tmuxp.Layout) error {
 	script, args, err := buildScript(path, title, layout)
 	if err != nil {
@@ -53,6 +55,15 @@ func buildScript(path string, title string, layout tmuxp.Layout) (string, []stri
 	s := &script{}
 	var focus []string
 
+	// a pick from another app, such as a launcher, must bring Ghostty forward
+	s.add("activate")
+	titleArg := s.arg(title)
+	s.add("set found to every window whose name is %s", titleArg)
+	s.add("if found is not {} then")
+	s.add("  activate window (item 1 of found)")
+	s.add("  return")
+	s.add("end if")
+
 	for w, window := range layout.Windows {
 		plan, err := splitPlan(window.Layout, len(window.Panes))
 		if err != nil {
@@ -71,7 +82,7 @@ func buildScript(path string, title string, layout tmuxp.Layout) (string, []stri
 
 		s.config(dir(0), window.Panes[0])
 		if w == 0 {
-			s.add("set w to new window with configuration cfg with title %s", s.arg(title))
+			s.add("set w to new window with configuration cfg with title %s", titleArg)
 			s.add("set tb to selected tab of w")
 		} else {
 			s.add("set tb to new tab in w with configuration cfg")
