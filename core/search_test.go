@@ -3,6 +3,7 @@ package core
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/oschrenk/sessionizer/model"
@@ -317,4 +318,20 @@ func TestBuildEntriesDeduplicates(t *testing.T) {
 			t.Fatalf("expected 3 entries, got %d: %v", len(entries), entries)
 		}
 	})
+}
+
+func TestStartSessionUnknownBackend(t *testing.T) {
+	// backend is package-global; reset it after the test.
+	t.Cleanup(func() { backend = "tmux" })
+
+	SetBackend("")
+	if backend != "tmux" {
+		t.Fatalf("SetBackend(\"\") = %q, want \"tmux\"", backend)
+	}
+
+	SetBackend("kitty")
+	err := StartSession("name", "/tmp", "", "", "")
+	if err == nil || !strings.Contains(err.Error(), `unknown backend "kitty"`) {
+		t.Errorf("StartSession with backend kitty = %v, want unknown backend error", err)
+	}
 }

@@ -77,6 +77,7 @@ Needs a config file at `$XDG_CONFIG_HOME/sessionizer/config.toml` (or `$HOME/.co
 ignore = ["node_modules"]   # optional
 socket_name = "primary"     # optional; tmux -L target for all commands (omit for the default server)
 tmux_path = "tmux"          # optional; path to the tmux executable, resolved through PATH by default
+backend = "tmux"            # optional; "tmux" or "ghostty", where a picked entry opens
 
 [startup]
 name = "default"            # optional; omit to disable the startup session
@@ -133,6 +134,10 @@ The socket name is resolved from, in order: the `--socket-name` flag, the `SESSI
 **Point at a specific tmux binary**
 
 sessionizer shells out to `tmux`, resolved through `PATH`. When `PATH` can't be relied on — under launchd, say, whose default excludes the nix profile directories — give it an absolute path with `--tmux-path`, the `SESSIONIZER_TMUX_PATH` environment variable, or `base.tmux_path` in the config, in that order of precedence.
+
+**Open projects as Ghostty windows**
+
+With `--backend ghostty`, the `SESSIONIZER_BACKEND` environment variable, or `base.backend = "ghostty"` in the config, in that order of precedence, a picked entry opens a new Ghostty window in its directory, titled with the entry label. It needs the patched Ghostty fork. Layouts do not apply yet, and picking the same entry twice opens two windows.
 
 **Open a fuzzy search**
 

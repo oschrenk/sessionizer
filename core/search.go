@@ -1,12 +1,14 @@
 package core
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 
+	"github.com/oschrenk/sessionizer/internal/ghostty"
 	"github.com/oschrenk/sessionizer/internal/tmux"
 	"github.com/oschrenk/sessionizer/internal/tmuxp"
 	"github.com/oschrenk/sessionizer/model"
@@ -192,10 +194,30 @@ func resolveLayoutPath(sessionPath string, layout string, layoutPath string, con
 	return ""
 }
 
+// backend is the program StartSession opens a session in: "tmux" or "ghostty".
+var backend = "tmux"
+
+// SetBackend picks the program StartSession opens a session in. An empty value
+// keeps "tmux".
+func SetBackend(b string) {
+	if b != "" {
+		backend = b
+	}
+}
+
 // StartSession creates or attaches to a tmux session with the given name and path.
+// With the ghostty backend it opens a Ghostty window instead, without a layout.
 // If no local .sessionizer.yml exists, it resolves a layout from the direct
 // layoutPath, or from a named layout file at configDir/layouts/<layout>.yml.
 func StartSession(name string, path string, layout string, layoutPath string, configDir string) error {
+	switch backend {
+	case "ghostty":
+		return ghostty.NewWindow(path, name)
+	case "tmux":
+	default:
+		return fmt.Errorf("unknown backend %q, want \"tmux\" or \"ghostty\"", backend)
+	}
+
 	server := new(tmux.Server)
 
 	var session tmux.Session

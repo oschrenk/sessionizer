@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/oschrenk/sessionizer/core"
 	"github.com/oschrenk/sessionizer/internal/tmux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,6 +31,7 @@ func Execute() {
 func init() {
 	rootCmd.PersistentFlags().StringP("socket-name", "s", "", "tmux socket name (tmux -L)")
 	rootCmd.PersistentFlags().String("tmux-path", "", "path to the tmux executable")
+	rootCmd.PersistentFlags().String("backend", "", "where sessions open: tmux or ghostty")
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, _ []string) {
 		// non-fatal config read so base.* applies to every command, including
 		// read-only ones that don't otherwise require a config file.
@@ -38,6 +40,7 @@ func init() {
 
 		tmux.SetSocket(resolve(cmd, "socket-name", "SESSIONIZER_SOCKET_NAME", "base.socket_name"))
 		tmux.SetBinary(resolve(cmd, "tmux-path", "SESSIONIZER_TMUX_PATH", "base.tmux_path"))
+		core.SetBackend(resolve(cmd, "backend", "SESSIONIZER_BACKEND", "base.backend"))
 	}
 }
 

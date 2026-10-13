@@ -100,6 +100,7 @@ let
         rooter_patterns = cfg.base.rooterPatterns;
         socket_name = cfg.base.socketName;
         tmux_path = cfg.base.tmuxPath;
+        backend = cfg.base.backend;
       };
 
       search = {
@@ -178,6 +179,17 @@ in
           tmux socket every command targets, as `tmux -L <name>`. Null uses the
           default server. Overridden by `--socket-name` and
           `SESSIONIZER_SOCKET_NAME`.
+        '';
+      };
+
+      backend = mkOption {
+        type = types.nullOr (types.enum [ "tmux" "ghostty" ]);
+        default = null;
+        example = "ghostty";
+        description = ''
+          Where a picked entry opens: a tmux session, or a Ghostty window. Null
+          uses tmux. The ghostty backend needs the patched Ghostty fork.
+          Overridden by `--backend` and `SESSIONIZER_BACKEND`.
         '';
       };
 
