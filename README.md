@@ -137,7 +137,7 @@ sessionizer shells out to `tmux`, resolved through `PATH`. When `PATH` can't be 
 
 **Open projects as Ghostty windows**
 
-With `--backend ghostty`, the `SESSIONIZER_BACKEND` environment variable, or `base.backend = "ghostty"` in the config, in that order of precedence, a picked entry opens a new Ghostty window in its directory, titled with the entry label. It needs the patched Ghostty fork. Layouts do not apply yet, and picking the same entry twice opens two windows.
+With `--backend ghostty`, the `SESSIONIZER_BACKEND` environment variable, or `base.backend = "ghostty"` in the config, in that order of precedence, a picked entry opens a new Ghostty window in its directory, titled with the entry label. It needs the patched Ghostty fork. A layout applies as tabs and splits: each layout window becomes a tab, and each pane a split. Ghostty has no layout presets, so sessionizer builds each layout type from splits of equal size. Picking the same entry twice opens two windows.
 
 **Open a fuzzy search**
 

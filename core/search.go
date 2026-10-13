@@ -206,13 +206,22 @@ func SetBackend(b string) {
 }
 
 // StartSession creates or attaches to a tmux session with the given name and path.
-// With the ghostty backend it opens a Ghostty window instead, without a layout.
+// With the ghostty backend it opens a new Ghostty window instead, with the same
+// layout as a fresh tmux session.
 // If no local .sessionizer.yml exists, it resolves a layout from the direct
 // layoutPath, or from a named layout file at configDir/layouts/<layout>.yml.
 func StartSession(name string, path string, layout string, layoutPath string, configDir string) error {
 	switch backend {
 	case "ghostty":
-		return ghostty.NewWindow(path, name)
+		l := tmuxp.Simple(name, path)
+		if resolvedPath := resolveLayoutPath(path, layout, layoutPath, configDir); resolvedPath != "" {
+			read, err := tmuxp.ReadLayoutFromFile(resolvedPath)
+			if err != nil {
+				return err
+			}
+			l = *read
+		}
+		return ghostty.NewWindow(path, name, l)
 	case "tmux":
 	default:
 		return fmt.Errorf("unknown backend %q, want \"tmux\" or \"ghostty\"", backend)
